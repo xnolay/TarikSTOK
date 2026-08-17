@@ -56,6 +56,12 @@
                         <input type="text" id="filterSku" placeholder="Contoh: COUGAR, MOUSE..." class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Barang</label>
+                        <select id="filterKategori" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">Semua Kategori</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Gudang</label>
                         <select id="filterGudang" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                             <option value="">Semua Gudang</option>
@@ -70,11 +76,11 @@
                             <option value="aman">Aman (&gt; 5)</option>
                         </select>
                     </div>
-                    <div class="flex items-end">
-                        <button onclick="renderStokTable()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition shadow-sm">
-                            Terapkan Filter
-                        </button>
-                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button onclick="renderStokTable()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg text-sm transition shadow-sm">
+                        Terapkan Filter
+                    </button>
                 </div>
             </div>
 
@@ -85,6 +91,7 @@
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
                                 <th class="p-3 border-b">No. SKU / Barang</th>
+                                <th class="p-3 border-b">Kategori</th>
                                 <th class="p-3 border-b">Deskripsi</th>
                                 <th class="p-3 border-b">Gudang</th>
                                 <th class="p-3 border-b text-center">Qty</th>
@@ -93,7 +100,7 @@
                         </thead>
                         <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
                             <tr>
-                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan muat data atau unggah PDF terlebih dahulu.</td>
+                                <td colspan="6" class="p-6 text-center text-slate-400">Silakan muat data atau unggah PDF terlebih dahulu.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -103,83 +110,74 @@
 
         <!-- TAB 2: VISUALISASI PENARIKAN BARANG -->
         <section id="section-penarikan" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                <!-- Form Penarikan 1 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                    <div class="border-b pb-3">
-                        <h2 class="text-md font-bold text-blue-900">Form Penarikan 1</h2>
-                        <p class="text-xs text-slate-500">Pilih tujuan (otomatis barang kosong/menipis) dan asal gudang.</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Barang / Tujuan Gudang (Stok 0 & Menipis)</label>
-                        <select id="p1Item" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" onchange="updateP1Options()">
-                            <option value="">-- Pilih Barang Target --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Asal Gudang (Semua Stok Tersedia)</label>
-                        <select id="p1AsalGudang" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">-- Pilih Asal Gudang --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Qty Penarikan</label>
-                        <input type="number" id="p1Qty" min="1" value="1" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <button onclick="prosesPenarikan1()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg text-sm transition shadow-sm">
-                        Proses Penarikan 1
+            
+            <!-- Kontrol Pilih Gudang Tujuan -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Pilih Gudang Tujuan (Target Penarikan)</label>
+                    <select id="pTujuanGudang" onchange="loadTargetGudangItems()" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+                        <option value="">-- Pilih Gudang Tujuan --</option>
+                    </select>
+                    <p class="text-xs text-slate-500 mt-1">Menampilkan otomatis barang berstatus Stok Kosong (0) & Menipis (1-5) di gudang tujuan.</p>
+                </div>
+                <div class="flex space-x-3 items-end md:justify-end">
+                    <button onclick="prosesPenarikan('Penarikan 1')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition shadow">
+                        💾 Proses Penarikan 1
+                    </button>
+                    <button onclick="prosesPenarikan('Penarikan 2')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition shadow">
+                        💾 Proses Penarikan 2
                     </button>
                 </div>
-
-                <!-- Form Penarikan 2 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                    <div class="border-b pb-3">
-                        <h2 class="text-md font-bold text-blue-900">Form Penarikan 2</h2>
-                        <p class="text-xs text-slate-500">Stok asal gudang otomatis dikurangi hasil Penarikan 1 jika gudang sama.</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Barang / Tujuan Gudang (Stok 0 & Menipis)</label>
-                        <select id="p2Item" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" onchange="updateP2Options()">
-                            <option value="">-- Pilih Barang Target --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Asal Gudang (Tereduksi Penarikan 1)</label>
-                        <select id="p2AsalGudang" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">-- Pilih Asal Gudang --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Qty Penarikan</label>
-                        <input type="number" id="p2Qty" min="1" value="1" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <button onclick="prosesPenarikan2()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg text-sm transition shadow-sm">
-                        Proses Penarikan 2
-                    </button>
-                </div>
-
             </div>
 
-            <!-- Hasil / Laporan Pengajuan Penarikan -->
+            <!-- Tabel Interaktif Penarikan per Gudang Tujuan -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700 text-sm">Daftar Barang Target Penarikan (Stok Kosong & Menipis di Tujuan)</h3>
+                    <span id="targetCountInfo" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">Pilih gudang tujuan terlebih dahulu</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
+                                <th class="p-3 border-b">SKU Barang</th>
+                                <th class="p-3 border-b">Deskripsi</th>
+                                <th class="p-3 border-b text-center">Stok Tujuan Awal</th>
+                                <th class="p-3 border-b">Pilih Asal Gudang</th>
+                                <th class="p-3 border-b text-center">Stok Asal (Tersedia)</th>
+                                <th class="p-3 border-b text-center w-32">Qty Ditarik (Input)</th>
+                                <th class="p-3 border-b text-center">Sisa Stok Asal</th>
+                                <th class="p-3 border-b text-center">Sisa Stok Tujuan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="penarikanTableBody" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="8" class="p-6 text-center text-slate-400">Silakan pilih gudang tujuan di atas untuk menampilkan daftar barang.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Laporan Riwayat Penarikan -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <h3 class="text-md font-bold text-slate-700 border-b pb-2">📋 Laporan Pengajuan Penarikan Stok Barang</h3>
+                <h3 class="text-md font-bold text-slate-700 border-b pb-2">📋 Laporan Pengajuan & Riwayat Penarikan Stok</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
                                 <th class="p-3 border-b">No</th>
-                                <th class="p-3 border-b">Jenis Penarikan</th>
+                                <th class="p-3 border-b">Jenis</th>
+                                <th class="p-3 border-b">Gudang Tujuan</th>
                                 <th class="p-3 border-b">SKU Barang</th>
                                 <th class="p-3 border-b">Deskripsi</th>
                                 <th class="p-3 border-b">Asal Gudang</th>
                                 <th class="p-3 border-b text-center">Qty Ditarik</th>
-                                <th class="p-3 border-b text-center">Sisa Stok Asal</th>
                             </tr>
                         </thead>
                         <tbody id="laporanTableBody" class="divide-y divide-slate-100">
                             <tr>
-                                <td colspan="7" class="p-4 text-center text-slate-400">Belum ada transaksi penarikan yang diproses.</td>
+                                <td colspan="7" class="p-4 text-center text-slate-400">Belum ada riwayat penarikan yang diproses.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -190,11 +188,11 @@
     </main>
 
     <script>
-        // Global State
         let masterStockData = [];
         let warehouses = [];
+        let categories = [];
         let transactionLogs = [];
-        let stateDeductions = {}; // Menyimpan pengurangan stok asal gudang per item
+        let stateDeductions = {}; // Menyimpan akumulasi pengurangan stok asal per item & gudang asal
 
         const warehouseList = [
             "HO-SUNTER", "CURUG", "M2M", "PRODUKSI", "BANDUNG", "SBY", "SBY-ITC", 
@@ -213,30 +211,31 @@
                 document.getElementById('section-penarikan').classList.remove('hidden');
                 document.getElementById('tab-penarikan').className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none transition";
                 document.getElementById('tab-stok').className = "py-3 px-4 font-semibold text-slate-500 hover:text-blue-600 focus:outline-none transition";
-                populateWithdrawalForm();
+                initPenarikanDropdowns();
             }
         }
 
-        // Load Sample Data from provided PDF snapshot context
         function loadSampleData() {
             masterStockData = [
-                { sku: "COUGAR ACC-QBXACRY2MM", desc: "Cougar Side Panel Acrylic for QBX", qtys: {"HO-SUNTER": 12, "CURUG": 12, "SBY": 0, "BANDUNG": 0} },
-                { sku: "PART-ARMOREVOARMS", desc: "Armor EVO Armrest (Left+Right)", qtys: {"HO-SUNTER": 2, "CURUG": 1, "SBY": 1, "BANDUNG": 0} },
-                { sku: "COUGAR ACCESSORIES ACC-COUGARWDS", desc: "Cougar Wooden Display Shelf", qtys: {"HO-SUNTER": 10, "CURUG": 5, "SBY": 1, "BANDUNG": 1} },
-                { sku: "CAMCYCLOPS COUGAR CAMERA", desc: "Cougar Camera Cyclops", qtys: {"HO-SUNTER": 9, "CURUG": 3, "SBY": 2, "BANDUNG": 1} },
-                { sku: "COUBUBU001", desc: "Cougar Bungee Bunker", qtys: {"HO-SUNTER": 29, "CURUG": 14, "SBY": 5, "BANDUNG": 3} },
-                { sku: "COUBUBU002", desc: "Cougar Bungee Bunker RGB", qtys: {"HO-SUNTER": 0, "CURUG": 2, "SBY": 0, "BANDUNG": 1} },
-                { sku: "COUHEST001", desc: "Cougar Headset Stand Bunker S", qtys: {"HO-SUNTER": 7, "CURUG": 4, "SBY": 2, "BANDUNG": 0} },
-                { sku: "DOCKDH07", desc: "Cougar Docking DH07", qtys: {"HO-SUNTER": 1, "CURUG": 0, "SBY": 1, "BANDUNG": 1} },
-                { sku: "CHAIRARGO", desc: "Cougar Chair GAMING ARGO", qtys: {"HO-SUNTER": 17, "CURUG": 12, "SBY": 2, "BANDUNG": 2} },
-                { sku: "CHAIRARGOONEB", desc: "Cougar Chair ARGO ONE BLACK", qtys: {"HO-SUNTER": 2, "CURUG": 2, "SBY": 0, "BANDUNG": 0} },
-                { sku: "CHAIRARMOREL", desc: "Cougar Chair ARMOR ELITE", qtys: {"HO-SUNTER": 7, "CURUG": 1, "SBY": 1, "BANDUNG": 0} },
-                { sku: "KB700KR", desc: "Keyboard Cougar 700K Red Switch", qtys: {"HO-SUNTER": 0, "CURUG": 0, "SBY": 1, "BANDUNG": 0} },
-                { sku: "KBAURORAS", desc: "Keyboard Cougar AURORA S", qtys: {"HO-SUNTER": 20, "CURUG": 16, "SBY": 1, "BANDUNG": 2} },
-                { sku: "DESKDEIMUS", desc: "COUGAR DESK DEIMUS 120", qtys: {"HO-SUNTER": 2, "CURUG": 0, "SBY": 0, "BANDUNG": 0} },
-                { sku: "DESKEGRAV160", desc: "Cougar desk E-GRAV 160", qtys: {"HO-SUNTER": 2, "CURUG": 0, "SBY": 1, "BANDUNG": 0} }
+                { category: "COUGAR ACCESSORIES", sku: "COUGAR ACC-QBXACRY2MM", desc: "Cougar Side Panel Acrylic for QBX", qtys: {"HO-SUNTER": 12, "CURUG": 0, "SBY": 5, "BANDUNG": 0, "SEMARANG": 2} },
+                { category: "COUGAR ACCESSORIES", sku: "PART-ARMOREVOARMS", desc: "Armor EVO Armrest (Left+Right)", qtys: {"HO-SUNTER": 2, "CURUG": 1, "SBY": 1, "BANDUNG": 0, "SEMARANG": 0} },
+                { category: "COUGAR ACCESSORIES", sku: "ACC-COUGARWDS", desc: "Cougar Wooden Display Shelf", qtys: {"HO-SUNTER": 10, "CURUG": 5, "SBY": 1, "BANDUNG": 1, "SEMARANG": 3} },
+                { category: "COUGAR MICE", sku: "CAMCYCLOPS", desc: "Cougar Camera Cyclops", qtys: {"HO-SUNTER": 9, "CURUG": 3, "SBY": 2, "BANDUNG": 1, "SEMARANG": 0} },
+                { category: "COUGAR MICE", sku: "COUBUBU001", desc: "Cougar Bungee Bunker", qtys: {"HO-SUNTER": 29, "CURUG": 14, "SBY": 5, "BANDUNG": 3, "SEMARANG": 2} },
+                { category: "COUGAR MICE", sku: "COUBUBU002", desc: "Cougar Bungee Bunker RGB", qtys: {"HO-SUNTER": 0, "CURUG": 2, "SBY": 0, "BANDUNG": 1, "SEMARANG": 0} },
+                { category: "COUGAR HEADSET", sku: "COUHEST001", desc: "Cougar Headset Stand Bunker S", qtys: {"HO-SUNTER": 7, "CURUG": 4, "SBY": 2, "BANDUNG": 0, "SEMARANG": 1} },
+                { category: "COUGAR HEADSET", sku: "DOCKDH07", desc: "Cougar Docking DH07", qtys: {"HO-SUNTER": 1, "CURUG": 0, "SBY": 1, "BANDUNG": 1, "SEMARANG": 0} },
+                { category: "GAMING CHAIR", sku: "CHAIRARGO", desc: "Cougar Chair GAMING ARGO", qtys: {"HO-SUNTER": 17, "CURUG": 12, "SBY": 2, "BANDUNG": 2, "SEMARANG": 4} },
+                { category: "GAMING CHAIR", sku: "CHAIRARGOONEB", desc: "Cougar Chair ARGO ONE BLACK", qtys: {"HO-SUNTER": 2, "CURUG": 2, "SBY": 0, "BANDUNG": 0, "SEMARANG": 1} },
+                { category: "GAMING CHAIR", sku: "CHAIRARMOREL", desc: "Cougar Chair ARMOR ELITE", qtys: {"HO-SUNTER": 7, "CURUG": 1, "SBY": 1, "BANDUNG": 0, "SEMARANG": 0} },
+                { category: "KEYBOARD", sku: "KB700KR", desc: "Keyboard Cougar 700K Red Switch", qtys: {"HO-SUNTER": 0, "CURUG": 0, "SBY": 1, "BANDUNG": 0, "SEMARANG": 2} },
+                { category: "KEYBOARD", sku: "KBAURORAS", desc: "Keyboard Cougar AURORA S", qtys: {"HO-SUNTER": 20, "CURUG": 16, "SBY": 1, "BANDUNG": 2, "SEMARANG": 3} },
+                { category: "GAMING DESK", sku: "DESKDEIMUS", desc: "COUGAR DESK DEIMUS 120", qtys: {"HO-SUNTER": 2, "CURUG": 0, "SBY": 0, "BANDUNG": 0, "SEMARANG": 1} },
+                { category: "GAMING DESK", sku: "DESKEGRAV160", desc: "Cougar desk E-GRAV 160", qtys: {"HO-SUNTER": 2, "CURUG": 0, "SBY": 1, "BANDUNG": 0, "SEMARANG": 0} }
             ];
             warehouses = warehouseList;
+            categories = [...new Set(masterStockData.map(item => item.category))];
+            
             initDropdowns();
             renderStokTable();
             alert("Data contoh stok berhasil dimuat!");
@@ -248,9 +247,14 @@
             warehouses.forEach(w => {
                 gudangSelect.innerHTML += `<option value="${w}">${w}</option>`;
             });
+
+            const katSelect = document.getElementById('filterKategori');
+            katSelect.innerHTML = '<option value="">Semua Kategori</option>';
+            categories.forEach(k => {
+                katSelect.innerHTML += `<option value="${k}">${k}</option>`;
+            });
         }
 
-        // Status Helper: 0: kosong, 1-5: menipis, >5 / >6: aman
         function getStatusInfo(qty) {
             if (qty === 0) return { text: "Kosong (0)", class: "bg-red-100 text-red-700" };
             if (qty >= 1 && qty <= 5) return { text: "Menipis ("+qty+")", class: "bg-amber-100 text-amber-700" };
@@ -262,27 +266,21 @@
             tbody.innerHTML = '';
 
             const searchSku = document.getElementById('filterSku').value.toLowerCase();
+            const filterKat = document.getElementById('filterKategori').value;
             const filterGudang = document.getElementById('filterGudang').value;
             const filterStatus = document.getElementById('filterStatus').value;
 
-            let filtered = [];
-
-            masterStockDataforEachItem => {
-                // if we iterate items & warehouses
-            };
-
-            // Flatten data by warehouse for detailed table
             let rows = [];
             masterStockData.forEach(item => {
                 warehouses.forEach(wh => {
                     let qty = item.qtys[wh] !== undefined ? item.qtys[wh] : 0;
-                    rows.push({ sku: item.sku, desc: item.desc, gudang: wh, qty: qty });
+                    rows.push({ category: item.category, sku: item.sku, desc: item.desc, gudang: wh, qty: qty });
                 });
             });
 
-            // Apply filters
-            filtered = rows.filter(r => {
+            let filtered = rows.filter(r => {
                 const matchSku = r.sku.toLowerCase().includes(searchSku) || r.desc.toLowerCase().includes(searchSku);
+                const matchKat = filterKat === "" || r.category === filterKat;
                 const matchGudang = filterGudang === "" || r.gudang === filterGudang;
                 
                 let matchStatus = true;
@@ -290,11 +288,11 @@
                 else if (filterStatus === "menipis") matchStatus = (r.qty >= 1 && r.qty <= 5);
                 else if (filterStatus === "aman") matchStatus = (r.qty > 5);
 
-                return matchSku && matchGudang && matchStatus;
+                return matchSku && matchKat && matchGudang && matchStatus;
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Tidak ada data stok yang sesuai filter.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Tidak ada data stok yang sesuai filter.</td></tr>`;
                 return;
             }
 
@@ -303,6 +301,7 @@
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-medium text-slate-700">${r.sku}</td>
+                        <td class="p-3 text-slate-600 text-xs font-semibold">${r.category}</td>
                         <td class="p-3 text-slate-600">${r.desc}</td>
                         <td class="p-3 text-slate-600">${r.gudang}</td>
                         <td class="p-3 text-center font-bold">${r.qty}</td>
@@ -314,114 +313,171 @@
             });
         }
 
-        // Withdrawal Tab Population
-        function populateWithdrawalForm() {
-            const p1Item = document.getElementById('p1Item');
-            const p2Item = document.getElementById('p2Item');
-            p1Item.innerHTML = '<option value="">-- Pilih Barang (Stok 0 / Menipis) --</option>';
-            p2Item.innerHTML = '<option value="">-- Pilih Barang (Stok 0 / Menipis) --</option>';
+        function initPenarikanDropdowns() {
+            const tujuanSelect = document.getElementById('pTujuanGudang');
+            tujuanSelect.innerHTML = '<option value="">-- Pilih Gudang Tujuan --</option>';
+            warehouses.forEach(w => {
+                tujuanSelect.innerHTML += `<option value="${w}">${w}</option>`;
+            });
+        }
 
-            // Filter items where at least one warehouse is 0 or Menipis (1-5)
+        function loadTargetGudangItems() {
+            const tujuanGudang = document.getElementById('pTujuanGudang').value;
+            const tbody = document.getElementById('penarikanTableBody');
+            const infoCount = document.getElementById('targetCountInfo');
+            tbody.innerHTML = '';
+
+            if (!tujuanGudang) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Silakan pilih gudang tujuan terlebih dahulu.</td></tr>`;
+                infoCount.innerText = "Pilih gudang tujuan terlebih dahulu";
+                return;
+            }
+
+            // Filter barang yang di gudang tujuan stoknya 0 atau menipis (1-5)
+            let targetItems = [];
             masterStockData.forEach((item, index) => {
-                let isTarget = Object.values(item.qtys).some(q => q <= 5);
-                if (isTarget) {
-                    const opt = `<option value="${index}">${item.sku} - ${item.desc}</option>`;
-                    p1Item.innerHTML += opt;
-                    p2Item.innerHTML += opt;
+                let qtyTujuan = item.qtys[tujuanGudang] !== undefined ? item.qtys[tujuanGudang] : 0;
+                if (qtyTujuan <= 5) { // Kosong (0) atau Menipis (1-5)
+                    targetItems.push({ index, item, qtyTujuan });
                 }
             });
 
-            const asalGudang1 = document.getElementById('p1AsalGudang');
-            const asalGudang2 = document.getElementById('p2AsalGudang');
-            asalGudang1.innerHTML = '<option value="">-- Pilih Asal Gudang --</option>';
-            asalGudang2.innerHTML = '<option value="">-- Pilih Asal Gudang --</option>';
+            infoCount.innerText = `${targetItems.length} barang ditemukan (Stok 0 & Menipis)`;
 
-            warehouses.forEach(w => {
-                asalGudang1.innerHTML += `<option value="${w}">${w}</option>`;
-                asalGudang2.innerHTML += `<option value="${w}">${w}</option>`;
+            if (targetItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Tidak ada barang dengan stok kosong/menipis di gudang ${tujuanGudang}.</td></tr>`;
+                return;
+            }
+
+            targetItems.forEach((t, idx) => {
+                // Dropdown asal gudang
+                let asalOptions = `<option value="">-- Pilih Asal --</option>`;
+                warehouses.forEach(w => {
+                    if (w !== tujuanGudang) {
+                        asalOptions += `<option value="${w}">${w}</option>`;
+                    }
+                });
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 item-row" data-item-idx="${t.index}">
+                        <td class="p-3 font-medium text-slate-700">${t.item.sku}</td>
+                        <td class="p-3 text-slate-600 text-xs">${t.item.desc}</td>
+                        <td class="p-3 text-center font-bold text-amber-600">${t.qtyTujuan}</td>
+                        <td class="p-3">
+                            <select class="asal-gudang-select border rounded px-2 py-1 text-xs w-full outline-none focus:ring-1 focus:ring-blue-500" onchange="updateAsalInfo(this, ${t.index}, '${tujuanGudang}')">
+                                ${asalOptions}
+                            </select>
+                        </td>
+                        <td class="p-3 text-center font-semibold text-slate-600 stok-asal-val">-</td>
+                        <td class="p-3 text-center">
+                            <input type="number" min="0" value="0" class="qty-ditarik-input border rounded px-2 py-1 text-xs w-24 text-center font-bold outline-none focus:ring-1 focus:ring-blue-500" oninput="hitungSisaKalkulasi(this, ${t.index}, '${tujuanGudang}', ${t.qtyTujuan})">
+                        </td>
+                        <td class="p-3 text-center font-bold text-red-600 sisa-asal-val">-</td>
+                        <td class="p-3 text-center font-bold text-emerald-600 sisa-tujuan-val">${t.qtyTujuan}</td>
+                    </tr>
+                `;
             });
         }
 
-        function updateP1Options() {
-            // Additional logic if needed when item changes
-        }
+        function updateAsalInfo(selectElem, itemIdx, tujuanGudang) {
+            const row = selectElem.closest('tr');
+            const asalGudang = selectElem.value;
+            const stokAsalCell = row.querySelector('.stok-asal-val');
+            const qtyInput = row.querySelector('.qty-ditarik-input');
 
-        function updateP2Options() {
-            // Additional logic if needed when item changes
-        }
-
-        function prosesPenarikan1() {
-            const itemIdx = document.getElementById('p1Item').value;
-            const asal = document.getElementById('p1AsalGudang').value;
-            const qty = parseInt(document.getElementById('p1Qty').value);
-
-            if (itemIdx === "" || asal === "" || isNaN(qty) || qty <= 0) {
-                alert("Mohon lengkapi form Penarikan 1 dengan benar.");
+            if (!asalGudang) {
+                stokAsalCell.innerText = "-";
+                qtyInput.value = 0;
+                row.querySelector('.sisa-asal-val').innerText = "-";
                 return;
             }
 
             const item = masterStockData[itemIdx];
-            let currentStock = item.qtys[asal] || 0;
+            let baseStokAsal = item.qtys[asalGudang] || 0;
+            let alreadyDeducted = (stateDeductions[itemIdx] && stateDeductions[itemIdx][asalGudang]) ? stateDeductions[itemIdx][asalGudang] : 0;
+            let availableStokAsal = baseStokAsal - alreadyDeducted;
 
-            if (qty > currentStock) {
-                alert(`Stok di gudang asal ${asal} tidak mencukupi! Stok tersedia: ${currentStock}`);
-                return;
-            }
-
-            // Simpan state pengurangan untuk Penarikan 2
-            stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
-            stateDeductions[itemIdx][asal] = (stateDeductions[itemIdx][asal] || 0) + qty;
-
-            const sisaStok = currentStock - qty;
-
-            transactionLogs.push({
-                type: "Penarikan 1",
-                sku: item.sku,
-                desc: item.desc,
-                asal: asal,
-                qty: qty,
-                sisa: sisaStok
-            });
-
-            renderLaporan();
-            alert("Penarikan 1 berhasil diproses!");
+            stokAsalCell.innerText = availableStokAsal;
+            qtyInput.value = 0;
+            hitungSisaKalkulasi(qtyInput, itemIdx, tujuanGudang, item.qtys[tujuanGudang] || 0);
         }
 
-        function prosesPenarikan2() {
-            const itemIdx = document.getElementById('p2Item').value;
-            const asal = document.getElementById('p2AsalGudang').value;
-            const qty = parseInt(document.getElementById('p2Qty').value);
+        function hitungSisaKalkulasi(inputElem, itemIdx, tujuanGudang, initialTujuanQty) {
+            const row = inputElem.closest('tr');
+            const asalGudang = row.querySelector('.asal-gudang-select').value;
+            const sisaAsalCell = row.querySelector('.sisa-asal-val');
+            const sisaTujuanCell = row.querySelector('.sisa-tujuan-val');
 
-            if (itemIdx === "" || asal === "" || isNaN(qty) || qty <= 0) {
-                alert("Mohon lengkapi form Penarikan 2 dengan benar.");
+            if (!asalGudang) {
+                inputElem.value = 0;
+                alert("Pilih terlebih dahulu Gudang Asal!");
                 return;
             }
 
             const item = masterStockData[itemIdx];
-            let baseStock = item.qtys[asal] || 0;
-            let alreadyDeducted = (stateDeductions[itemIdx] && stateDeductions[itemIdx][asal]) ? stateDeductions[itemIdx][asal] : 0;
-            let availableStock = baseStock - alreadyDeducted;
+            let baseStokAsal = item.qtys[asalGudang] || 0;
+            let alreadyDeducted = (stateDeductions[itemIdx] && stateDeductions[itemIdx][asalGudang]) ? stateDeductions[itemIdx][asalGudang] : 0;
+            let availableStokAsal = baseStokAsal - alreadyDeducted;
 
-            if (qty > availableStock) {
-                alert(`Stok di gudang asal ${asal} tidak mencukupi setelah dikurangi Penarikan 1! Sisa stok efektif: ${availableStock}`);
+            let qtyDitarik = parseInt(inputElem.value);
+            if (isNaN(qtyDitarik) || qtyDitarik < 0) qtyDitarik = 0;
+
+            if (qtyDitarik > availableStokAsal) {
+                alert(`Qty ditarik melebihi stok tersedia di gudang asal (${availableStokAsal})!`);
+                qtyDitarik = availableStokAsal;
+                inputElem.value = qtyDitarik;
+            }
+
+            let sisaAsal = availableStokAsal - qtyDitarik;
+            let sisaTujuan = initialTujuanQty + qtyDitarik;
+
+            sisaAsalCell.innerText = sisaAsal;
+            sisaTujuanCell.innerText = sisaTujuan;
+        }
+
+        function prosesPenarikan(jenisPenarikan) {
+            const tujuanGudang = document.getElementById('pTujuanGudang').value;
+            if (!tujuanGudang) {
+                alert("Pilih Gudang Tujuan terlebih dahulu!");
                 return;
             }
 
-            // Update pengurangan
-            stateDeductions[itemIdx][asal] = alreadyDeducted + qty;
-            const sisaStok = availableStock - qty;
+            const rows = document.querySelectorAll('.item-row');
+            let processedCount = 0;
 
-            transactionLogs.push({
-                type: "Penarikan 2",
-                sku: item.sku,
-                desc: item.desc,
-                asal: asal,
-                qty: qty,
-                sisa: sisaStok
+            rows.forEach(row => {
+                const itemIdx = row.getAttribute('data-item-idx');
+                const asalGudang = row.querySelector('.asal-gudang-select').value;
+                const qtyDitarik = parseInt(row.querySelector('.qty-ditarik-input').value);
+
+                if (asalGudang && qtyDitarik > 0) {
+                    const item = masterStockData[itemIdx];
+
+                    // Catat pengurangan untuk Penarikan berikutnya
+                    stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
+                    stateDeductions[itemIdx][asalGudang] = (stateDeductions[itemIdx][asalGudang] || 0) + qtyDitarik;
+
+                    transactionLogs.push({
+                        type: jenisPenarikan,
+                        tujuan: tujuanGudang,
+                        sku: item.sku,
+                        desc: item.desc,
+                        asal: asalGudang,
+                        qty: qtyDitarik
+                    });
+
+                    processedCount++;
+                }
             });
 
+            if (processedCount === 0) {
+                alert("Tidak ada item yang diisi jumlah qyt penarikan atau asal gudang belum dipilih.");
+                return;
+            }
+
             renderLaporan();
-            alert("Penarikan 2 berhasil diproses!");
+            alert(`${jenisPenarikan} berhasil diproses dan dicatat ke laporan!`);
+            loadTargetGudangItems(); // Refresh form bawah
         }
 
         function renderLaporan() {
@@ -429,7 +485,7 @@
             tbody.innerHTML = '';
 
             if (transactionLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada transaksi penarikan yang diproses.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada riwayat penarikan yang diproses.</td></tr>`;
                 return;
             }
 
@@ -438,11 +494,11 @@
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-medium">${index + 1}</td>
                         <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold ${log.type === 'Penarikan 1' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'}">${log.type}</span></td>
+                        <td class="p-3 font-semibold text-blue-900">${log.tujuan}</td>
                         <td class="p-3 font-medium text-slate-700">${log.sku}</td>
-                        <td class="p-3 text-slate-600">${log.desc}</td>
+                        <td class="p-3 text-slate-600 text-xs">${log.desc}</td>
                         <td class="p-3 text-slate-600">${log.asal}</td>
                         <td class="p-3 text-center font-bold text-blue-600">${log.qty}</td>
-                        <td class="p-3 text-center font-semibold text-slate-700">${log.sisa}</td>
                     </tr>
                 `;
             });
@@ -466,8 +522,7 @@
                         fullText += pageText + "\n";
                     }
                     
-                    // Simple notification of success and loading sample data as robust parser fallback
-                    alert("File PDF berhasil diunggah dan dibaca! Memuat struktur data stok...");
+                    alert("File PDF berhasil diunggah! Memuat struktur data stok & kategori...");
                     loadSampleData();
                 } catch (err) {
                     console.error(err);
@@ -477,7 +532,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // Load default sample data on startup for immediate user testing
         window.onload = function() {
             loadSampleData();
         };
