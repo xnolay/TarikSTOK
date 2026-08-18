@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PT. Glori Mitra Sukses - Manajemen Stok & Penarikan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SheetJS Versi Lengkap untuk Support .xls dan .xlsx -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
 
@@ -18,8 +19,8 @@
             </div>
             <div class="mt-4 md:mt-0 flex items-center space-x-3">
                 <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm cursor-pointer transition shadow flex items-center space-x-2">
-                    <span>📊 Upload File Excel Stok (.xls/.xlsx)</span>
-                    <input type="file" id="excelUpload" accept=".xls, .xlsx" class="hidden">
+                    <span>📊 Upload File Excel Stok (.xls / .xlsx)</span>
+                    <input type="file" id="excelUpload" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
                 </label>
                 <button onclick="loadDefaultData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
                     🔄 Muat Data Contoh
@@ -97,7 +98,7 @@
                         </thead>
                         <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
                             <tr>
-                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok lengkap Anda (`.xls`/`.xlsx`).</td>
+                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok Anda (`.xls`/`.xlsx`).</td>
                             </tr>
                         </tbody>
                     </table>
@@ -241,8 +242,7 @@
         function loadSampleData() {
             masterStockData = [
                 { category: "COUGAR", desc: "SIDE PANEL ACRYLIC FOR QBX 2MM", qtys: {"SUNTR": 12, "CURUG": 0, "SBY": 5, "M2M": 0, "SEMARANG": 2} },
-                { category: "FIBER Kabel", desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2", qtys: {"SUNTR": 9, "CURUG": 2, "SBY": 45, "M2M": 2, "SEMARANG": 0} },
-                { category: "FIBER Kabel", desc: "FO CABLE eHOSE AIRBLOWN 12 CORE", qtys: {"SUNTR": 0, "CURUG": 0, "SBY": 0, "M2M": 0, "SEMARANG": 0} }
+                { category: "FIBER Kabel", desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2", qtys: {"SUNTR": 9, "CURUG": 2, "SBY": 45, "M2M": 2, "SEMARANG": 0} }
             ];
             warehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG", "PRDCT"];
             categories = [...new Set(masterStockData.map(item => item.category))];
@@ -392,10 +392,8 @@
                         totalStokTujuan += (item.qtys[tujuanW] || 0);
                     });
 
-                    // ATURAN BARU: Apabila Asal DAN Tujuan sama-sama 0, jangan tampilkan
                     if (totalStokAsal === 0 && totalStokTujuan === 0) return;
 
-                    // Filter Stok KHUSUS GUDANG TUJUAN
                     let matchFilter = true;
                     if (filterStokTujuan === 'lt10') {
                         if (totalStokTujuan >= 10) matchFilter = false;
@@ -435,7 +433,7 @@
                 });
 
                 if (rowCount === 0) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai kategori & filter stok tujuan tersebut (item dengan asal & tujuan 0 disembunyikan).</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai kategori & filter stok tujuan tersebut.</td></tr>`;
                 }
             }, 30);
         }
@@ -579,7 +577,7 @@
             });
         }
 
-        // --- PARSER EXCEL OTOMATIS ---
+        // --- PARSER EXCEL ROBUST UNTUK SEMUA FORMAT .xls & .xlsx ---
         document.getElementById('excelUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -595,6 +593,14 @@
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
                     let headerRowIdx = 0;
+                    for(let r=0; r < Math.min(10, jsonRows.length); r++) {
+                        let rowStr = JSON.stringify(jsonRows[r]).toUpperCase();
+                        if(rowStr.includes("KATAGORI") || rowStr.includes("KATEGORI") || rowStr.includes("DESKRIPSI")) {
+                            headerRowIdx = r;
+                            break;
+                        }
+                    }
+
                     const headers = jsonRows[headerRowIdx] || [];
                     
                     let katColIdx = 1; 
@@ -610,12 +616,17 @@
                     headers.forEach((h, idx) => {
                         if (h && idx > 1 && idx !== katColIdx) {
                             let wName = String(h).trim();
-                            if (wName && wName !== "undefined") {
+                            if (wName && wName !== "undefined" && wName !== "NOTE") {
                                 detectedWarehouses.push(wName);
                                 whIndices[wName] = idx;
                             }
                         }
                     });
+
+                    if (detectedWarehouses.length === 0) {
+                        detectedWarehouses = ["SUNTR", "M2M", "CURUG", "SBY", "SEMARANG"];
+                        detectedWarehouses.forEach((w, i) => whIndices[w] = 3 + i);
+                    }
 
                     warehouses = detectedWarehouses;
                     masterStockData = [];
@@ -652,7 +663,7 @@
                     alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
-                    alert("Terjadi kesalahan saat membaca file Excel.");
+                    alert("Terjadi kesalahan saat membaca file Excel. Pastikan file tidak sedang terbuka di aplikasi lain.");
                 }
             };
             reader.readAsArrayBuffer(file);
