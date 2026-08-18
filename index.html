@@ -154,7 +154,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
                     <h3 class="font-bold text-sm tracking-wide">PENGAJUAN PENARIKAN BARANG</h3>
-                    <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Centang gudang & klik "Terapkan Pilihan & Filter"</span>
+                    <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Sinkron dengan Kategori Menu Stok</span>
                 </div>
                 <div class="overflow-x-auto max-h-[500px]">
                     <table id="tabelPengajuanExcel" class="w-full text-left border-collapse text-xs">
@@ -177,7 +177,7 @@
                         </thead>
                         <tbody id="excelTableBody" class="divide-y divide-slate-200">
                             <tr>
-                                <td colspan="9" class="p-8 text-center text-slate-400">Silakan centang Gudang Asal, Gudang Tujuan, lalu klik tombol "Terapkan Pilihan & Filter".</td>
+                                <td colspan="9" class="p-8 text-center text-slate-400">Silakan centang Gudang Asal & Tujuan, lalu klik tombol "Terapkan Pilihan & Filter".</td>
                             </tr>
                         </tbody>
                     </table>
@@ -216,7 +216,7 @@
         let warehouses = [];
         let categories = [];
         let transactionLogs = [];
-        let stateDeductions = {}; // Menyimpan akumulasi perubahan stok per item dan per gudang
+        let stateDeductions = {}; 
 
         function switchTab(tab) {
             if (tab === 'stok') {
@@ -230,7 +230,7 @@
                 document.getElementById('tab-penarikan').className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none transition";
                 document.getElementById('tab-stok').className = "py-3 px-4 font-semibold text-slate-500 hover:text-blue-600 focus:outline-none transition";
                 initPenarikanCheckboxes();
-                loadFormPenarikan(); 
+                loadFormPenarikan(); // Otomatis muat sesuai kategori yang dipilih di menu stok
             }
         }
 
@@ -242,7 +242,7 @@
             masterStockData = [
                 { category: "COUGAR", desc: "SIDE PANEL ACRYLIC FOR QBX 2MM", qtys: {"SUNTR": 12, "CURUG": 0, "SBY": 5, "M2M": 0, "SEMARANG": 2} },
                 { category: "FIBER Kabel", desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2", qtys: {"SUNTR": 9, "CURUG": 2, "SBY": 45, "M2M": 2, "SEMARANG": 0} },
-                { category: "FIBER Kabel", desc: "FO CABLE eHOSE AIRBLOWN 12 CORE", qtys: {"SUNTR": 0, "CURUG": 0, "SBY": 0, "M2M": 0, "SEMARANG": 0} }
+                { category: "FIBER Kabel", desc: "FO CABLE eHOSE AIRBLOWN 12 CORE", qtys: {"SUNTR": 1, "CURUG": 60, "SBY": 1, "M2M": 1, "SEMARANG": 0} }
             ];
             warehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG", "PRDCT"];
             categories = [...new Set(masterStockData.map(item => item.category))];
@@ -285,13 +285,9 @@
             const filterStatus = document.getElementById('filterStatus').value;
 
             let rows = [];
-            masterStockData.forEach((item, itemIdx) => {
+            masterStockData.forEach(item => {
                 warehouses.forEach(wh => {
-                    let base = item.qtys[wh] !== undefined ? item.qtys[wh] : 0;
-                    // Terapkan akumulasi perubahan stok jika ada transaksi
-                    let ded = (stateDeductions[itemIdx] && stateDeductions[itemIdx][wh]) ? stateDeductions[itemIdx][wh] : 0;
-                    let qty = Math.max(0, base + ded);
-
+                    let qty = item.qtys[wh] !== undefined ? item.qtys[wh] : 0;
                     rows.push({ category: item.category, desc: item.desc, gudang: wh, qty: qty });
                 });
             });
@@ -336,6 +332,7 @@
             const containerAsal = document.getElementById('containerAsal');
             const containerTujuan = document.getElementById('containerTujuan');
             
+            // Simpan status centang sebelumnya jika ada
             let checkedAsalOld = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             let checkedTujuanOld = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
 
@@ -365,7 +362,7 @@
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
             const filterStokTujuan = document.getElementById('filterStokPenarikan').value;
-            const activeCategory = document.getElementById('filterKategori').value; 
+            const activeCategory = document.getElementById('filterKategori').value; // Ambil kategori dari menu stok
             const tbody = document.getElementById('excelTableBody');
             const infoStatus = document.getElementById('excelInfoStatus');
 
@@ -375,34 +372,29 @@
             }
 
             infoStatus.innerText = `Kategori: ${activeCategory || 'Semua'} | Asal: [${selectedAsal.join(', ')}] ➔ Tujuan: [${selectedTujuan.join(', ')}]`;
-            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang sesuai kategori...</td></tr>`;
 
             setTimeout(() => {
                 tbody.innerHTML = '';
                 let rowCount = 0;
 
                 masterStockData.forEach((item, index) => {
+                    // Filter berdasarkan kategori yang dipilih di Menu Stok
                     if (activeCategory && item.category !== activeCategory) return;
 
-                    // Hitung total stok asal dengan memperhitungkan akumulasi sisa stok terkini
                     let totalStokAsal = 0;
                     selectedAsal.forEach(asalW => {
                         let base = item.qtys[asalW] || 0;
                         let ded = (stateDeductions[index] && stateDeductions[index][asalW]) ? stateDeductions[index][asalW] : 0;
-                        totalStokAsal += Math.max(0, base + ded); // ded bernilai negatif saat dikurangi
+                        totalStokAsal += Math.max(0, base - ded);
                     });
 
-                    // Hitung total stok tujuan dengan memperhitungkan akumulasi stok yang sudah masuk
                     let totalStokTujuan = 0;
                     selectedTujuan.forEach(tujuanW => {
-                        let base = item.qtys[tujuanW] || 0;
-                        let add = (stateDeductions[index] && stateDeductions[index][tujuanW]) ? stateDeductions[index][tujuanW] : 0;
-                        totalStokTujuan += Math.max(0, base + add); // add bernilai positif saat ditambah
+                        totalStokTujuan += (item.qtys[tujuanW] || 0);
                     });
 
-                    // Aturan: Jika stok asal DAN tujuan sama-sama 0, jangan tampilkan
-                    if (totalStokAsal === 0 && totalStokTujuan === 0) return;
-
+                    // Filter Stok KHUSUS GUDANG TUJUAN
                     let matchFilter = true;
                     if (filterStokTujuan === 'lt10') {
                         if (totalStokTujuan >= 10) matchFilter = false;
@@ -437,8 +429,6 @@
                             <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">${totalStokTujuan}</td>
                         </tr>
                     `;
-
-                    if (rowCount >= 500) break; 
                 });
 
                 if (rowCount === 0) {
@@ -474,7 +464,7 @@
             sisaTujuanRes.innerText = sisaTujuan;
         }
 
-        // --- SIMPAN PENARIKAN & AKUMULASI STOK OTOMATIS KE GUDANG TUJUAN & ASAL ---
+        // --- FITUR SIMPAN & DOWNLOAD OTOMATIS EXCEL ---
         function simpanFormPenarikan(jenisPenarikan) {
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
@@ -488,12 +478,13 @@
             let count = 0;
             let excelExportData = [];
 
+            // Tambahkan Header laporan untuk file Excel yang didownload
             excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
             excelExportData.push([`Jenis: ${jenisPenarikan}`, `Asal: ${selectedAsal.join(', ')}`, `Tujuan: ${selectedTujuan.join(', ')}`]);
-            excelExportData.push([]); 
+            excelExportData.push([]); // Baris kosong
             excelExportData.push(["No", "Deskripsi Barang", "Total Stok Asal", "Jumlah Diajukan", "Jumlah Disetujui", "Total Stok Tujuan", "Keterangan", "Sisa Stok Asal", "Sisa Stok Tujuan"]);
 
-            rows.forEach((row) => {
+            rows.forEach((row, idx) => {
                 const itemIdx = row.getAttribute('data-item-idx');
                 const diajukan = parseInt(row.querySelector('.input-diajukan').value) || 0;
                 const disetujui = parseInt(row.querySelector('.input-disetujui').value) || 0;
@@ -502,32 +493,19 @@
                 if (disetujui > 0 || diajukan > 0) {
                     const item = masterStockData[itemIdx];
 
-                    // Kurangi stok di gudang-gudang asal secara proporsional
                     let sisaToDeduct = disetujui;
                     selectedAsal.forEach(asalW => {
                         if (sisaToDeduct <= 0) return;
                         let base = item.qtys[asalW] || 0;
                         let ded = (stateDeductions[itemIdx] && stateDeductions[itemIdx][asalW]) ? stateDeductions[itemIdx][asalW] : 0;
-                        let avail = Math.max(0, base + ded);
+                        let avail = Math.max(0, base - ded);
 
                         if (avail > 0) {
                             let take = Math.min(sisaToDeduct, avail);
                             stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
-                            stateDeductions[itemIdx][asalW] = ded - take; // Simpan sebagai minus untuk pengurangan
+                            stateDeductions[itemIdx][asalW] = ded + take;
                             sisaToDeduct -= take;
                         }
-                    });
-
-                    // Tambahkan stok ke gudang-gudang tujuan secara merata / ke tujuan pertama yang dicentang
-                    let sisaToAdd = disetujui;
-                    selectedTujuan.forEach((tujuanW, tIdx) => {
-                        if (sisaToAdd <= 0) return;
-                        let addShare = Math.ceil(sisaToAdd / (selectedTujuan.length - tIdx));
-                        
-                        stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
-                        let curAdd = stateDeductions[itemIdx][tujuanW] || 0;
-                        stateDeductions[itemIdx][tujuanW] = curAdd + addShare; // Simpan sebagai plus untuk penambahan
-                        sisaToAdd -= addShare;
                     });
 
                     transactionLogs.push({
@@ -565,6 +543,7 @@
 
             renderRekap();
 
+            // Ekspor dan Download otomatis ke file Excel (.xlsx)
             const worksheet = XLSX.utils.aoa_to_sheet(excelExportData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Pengajuan Penarikan");
@@ -572,7 +551,7 @@
             let fileName = `Pengajuan_${jenisPenarikan.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(workbook, fileName);
 
-            alert(`${jenisPenarikan} berhasil disimpan, stok gudang tujuan telah bertambah, dan file Excel berhasil di-download!`);
+            alert(`${jenisPenarikan} berhasil disimpan dan file Excel berhasil di-download!`);
             loadFormPenarikan(); 
         }
 
@@ -610,17 +589,11 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    if (!jsonRows || jsonRows.length === 0) {
-                        alert("File Excel kosong atau tidak terbaca.");
-                        return;
-                    }
-
                     let headerRowIdx = 0;
                     const headers = jsonRows[headerRowIdx] || [];
                     
@@ -637,21 +610,15 @@
                     headers.forEach((h, idx) => {
                         if (h && idx > 1 && idx !== katColIdx) {
                             let wName = String(h).trim();
-                            if (wName && wName !== "undefined" && wName !== "NOTE" && wName !== "PRDCT") {
+                            if (wName && wName !== "undefined") {
                                 detectedWarehouses.push(wName);
                                 whIndices[wName] = idx;
                             }
                         }
                     });
 
-                    if (detectedWarehouses.length === 0) {
-                        detectedWarehouses = ["SUNTR", "M2M", "CURUG", "SBY", "SEMARANG"];
-                        detectedWarehouses.forEach((w, i) => whIndices[w] = 2 + i);
-                    }
-
                     warehouses = detectedWarehouses;
                     masterStockData = [];
-                    stateDeductions = {}; // Reset perubahan stok saat upload file baru
 
                     let currentCategory = "UMUM";
                     for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
@@ -662,10 +629,7 @@
                         if (!desc || desc.toLowerCase().includes("total") || desc.toLowerCase().includes("cetak di")) continue;
 
                         if (katColIdx !== -1 && row[katColIdx]) {
-                            let katVal = String(row[katColIdx]).trim();
-                            if (katVal && katVal !== "0" && katVal !== "KATAGORI" && katVal !== "KATEGORI") {
-                                currentCategory = katVal;
-                            }
+                            currentCategory = String(row[katColIdx]).trim();
                         }
 
                         let qtys = {};
@@ -685,7 +649,7 @@
                     categories = [...new Set(masterStockData.map(item => item.category))];
                     initDropdowns();
                     renderStokTable();
-                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang dari ${warehouses.length} gudang.`);
+                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
                     alert("Terjadi kesalahan saat membaca file Excel.");
