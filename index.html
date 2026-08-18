@@ -125,15 +125,15 @@
                     </div>
                 </div>
 
-                <!-- Filter Stok Tambahan & Tombol Eksekusi -->
+                <!-- Filter Stok Tujuan & Tombol Eksekusi -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t items-center">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Stok Asal/Tujuan:</label>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Stok Gudang Tujuan:</label>
                         <select id="filterStokPenarikan" class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium">
-                            <option value="all">Semua Stok</option>
-                            <option value="lt10">Stok &lt; 10</option>
-                            <option value="lt50">Stok &lt; 50</option>
-                            <option value="gt50">Stok &gt; 50</option>
+                            <option value="all">Semua Stok Tujuan</option>
+                            <option value="lt10">Stok Tujuan &lt; 10</option>
+                            <option value="lt50">Stok Tujuan &lt; 50</option>
+                            <option value="gt50">Stok Tujuan &gt; 50</option>
                         </select>
                     </div>
                     <div class="md:col-span-2 flex justify-end space-x-2 pt-2">
@@ -141,10 +141,10 @@
                             🔍 Terapkan Pilihan & Filter
                         </button>
                         <button onclick="simpanFormPenarikan('Penarikan 1')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-xs transition shadow">
-                            💾 Simpan Penarikan 1
+                            📥 Simpan Penarikan 1 (Download Excel)
                         </button>
                         <button onclick="simpanFormPenarikan('Penarikan 2')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-xs transition shadow">
-                            💾 Simpan Penarikan 2
+                            📥 Simpan Penarikan 2 (Download Excel)
                         </button>
                     </div>
                 </div>
@@ -154,10 +154,10 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
                     <h3 class="font-bold text-sm tracking-wide">PENGAJUAN PENARIKAN BARANG</h3>
-                    <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Centang gudang & klik "Terapkan Pilihan & Filter"</span>
+                    <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Sinkron dengan Kategori Menu Stok</span>
                 </div>
                 <div class="overflow-x-auto max-h-[500px]">
-                    <table class="w-full text-left border-collapse text-xs">
+                    <table id="tabelPengajuanExcel" class="w-full text-left border-collapse text-xs">
                         <thead class="sticky top-0 z-10">
                             <tr class="bg-slate-200 text-slate-700 uppercase border-b">
                                 <th rowspan="2" class="p-2 border-r align-middle text-center w-12 bg-slate-200">No</th>
@@ -177,7 +177,7 @@
                         </thead>
                         <tbody id="excelTableBody" class="divide-y divide-slate-200">
                             <tr>
-                                <td colspan="9" class="p-8 text-center text-slate-400">Silakan centang Gudang Asal, Gudang Tujuan, lalu klik tombol "Terapkan Pilihan & Filter".</td>
+                                <td colspan="9" class="p-8 text-center text-slate-400">Silakan centang Gudang Asal & Tujuan, lalu klik tombol "Terapkan Pilihan & Filter".</td>
                             </tr>
                         </tbody>
                     </table>
@@ -230,6 +230,7 @@
                 document.getElementById('tab-penarikan').className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none transition";
                 document.getElementById('tab-stok').className = "py-3 px-4 font-semibold text-slate-500 hover:text-blue-600 focus:outline-none transition";
                 initPenarikanCheckboxes();
+                loadFormPenarikan(); // Otomatis muat sesuai kategori yang dipilih di menu stok
             }
         }
 
@@ -240,8 +241,8 @@
         function loadSampleData() {
             masterStockData = [
                 { category: "COUGAR", desc: "SIDE PANEL ACRYLIC FOR QBX 2MM", qtys: {"SUNTR": 12, "CURUG": 0, "SBY": 5, "M2M": 0, "SEMARANG": 2} },
-                { category: "COUGAR", desc: "Cougar case AIRFACE 180 White", qtys: {"SUNTR": 9, "CURUG": 2, "SBY": 45, "M2M": 2, "SEMARANG": 0} },
-                { category: "COUGAR", desc: "CASE AIRFACE ECO RGB", qtys: {"SUNTR": 1, "CURUG": 60, "SBY": 1, "M2M": 1, "SEMARANG": 0} }
+                { category: "FIBER Kabel", desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2", qtys: {"SUNTR": 9, "CURUG": 2, "SBY": 45, "M2M": 2, "SEMARANG": 0} },
+                { category: "FIBER Kabel", desc: "FO CABLE eHOSE AIRBLOWN 12 CORE", qtys: {"SUNTR": 1, "CURUG": 60, "SBY": 1, "M2M": 1, "SEMARANG": 0} }
             ];
             warehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG", "PRDCT"];
             categories = [...new Set(masterStockData.map(item => item.category))];
@@ -330,19 +331,27 @@
         function initPenarikanCheckboxes() {
             const containerAsal = document.getElementById('containerAsal');
             const containerTujuan = document.getElementById('containerTujuan');
+            
+            // Simpan status centang sebelumnya jika ada
+            let checkedAsalOld = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
+            let checkedTujuanOld = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
+
             containerAsal.innerHTML = '';
             containerTujuan.innerHTML = '';
 
-            warehouses.forEach(w => {
+            warehouses.forEach((w, idx) => {
+                let isAsalChecked = checkedAsalOld.length > 0 ? checkedAsalOld.includes(w) : (idx === 0);
+                let isTujuanChecked = checkedTujuanOld.length > 0 ? checkedTujuanOld.includes(w) : (idx === 1);
+
                 containerAsal.innerHTML += `
                     <label class="flex items-center space-x-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                        <input type="checkbox" value="${w}" class="chk-asal rounded text-blue-600 focus:ring-blue-500">
+                        <input type="checkbox" value="${w}" class="chk-asal rounded text-blue-600 focus:ring-blue-500" ${isAsalChecked ? 'checked' : ''}>
                         <span>${w}</span>
                     </label>
                 `;
                 containerTujuan.innerHTML += `
                     <label class="flex items-center space-x-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                        <input type="checkbox" value="${w}" class="chk-tujuan rounded text-emerald-600 focus:ring-emerald-500">
+                        <input type="checkbox" value="${w}" class="chk-tujuan rounded text-emerald-600 focus:ring-emerald-500" ${isTujuanChecked ? 'checked' : ''}>
                         <span>${w}</span>
                     </label>
                 `;
@@ -352,25 +361,26 @@
         function loadFormPenarikan() {
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
-            const filterStok = document.getElementById('filterStokPenarikan').value;
+            const filterStokTujuan = document.getElementById('filterStokPenarikan').value;
+            const activeCategory = document.getElementById('filterKategori').value; // Ambil kategori dari menu stok
             const tbody = document.getElementById('excelTableBody');
             const infoStatus = document.getElementById('excelInfoStatus');
 
             if (selectedAsal.length === 0 || selectedTujuan.length === 0) {
-                alert("Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan, kemudian klik Terapkan.");
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan.</td></tr>`;
                 return;
             }
 
-            infoStatus.innerText = `Memproses data (${selectedAsal.length} Asal, ${selectedTujuan.length} Tujuan)...`;
-            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang, mohon sebentar...</td></tr>`;
+            infoStatus.innerText = `Kategori: ${activeCategory || 'Semua'} | Asal: [${selectedAsal.join(', ')}] ➔ Tujuan: [${selectedTujuan.join(', ')}]`;
+            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang sesuai kategori...</td></tr>`;
 
             setTimeout(() => {
                 tbody.innerHTML = '';
                 let rowCount = 0;
 
-                // Batasi pemrosesan maksimal 300 baris pertama yang cocok agar browser tetap sangat cepat
-                for (let index = 0; index < masterStockData.length; index++) {
-                    let item = masterStockData[index];
+                masterStockData.forEach((item, index) => {
+                    // Filter berdasarkan kategori yang dipilih di Menu Stok
+                    if (activeCategory && item.category !== activeCategory) return;
 
                     let totalStokAsal = 0;
                     selectedAsal.forEach(asalW => {
@@ -384,22 +394,26 @@
                         totalStokTujuan += (item.qtys[tujuanW] || 0);
                     });
 
+                    // Filter Stok KHUSUS GUDANG TUJUAN
                     let matchFilter = true;
-                    if (filterStok === 'lt10') {
-                        if (totalStokAsal >= 10 && totalStokTujuan >= 10) matchFilter = false;
-                    } else if (filterStok === 'lt50') {
-                        if (totalStokAsal >= 50 && totalStokTujuan >= 50) matchFilter = false;
-                    } else if (filterStok === 'gt50') {
-                        if (totalStokAsal <= 50 && totalStokTujuan <= 50) matchFilter = false;
+                    if (filterStokTujuan === 'lt10') {
+                        if (totalStokTujuan >= 10) matchFilter = false;
+                    } else if (filterStokTujuan === 'lt50') {
+                        if (totalStokTujuan >= 50) matchFilter = false;
+                    } else if (filterStokTujuan === 'gt50') {
+                        if (totalStokTujuan <= 50) matchFilter = false;
                     }
 
-                    if (!matchFilter) continue;
+                    if (!matchFilter) return;
                     rowCount++;
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50 excel-row" data-item-idx="${index}" data-asal='${JSON.stringify(selectedAsal)}' data-tujuan='${JSON.stringify(selectedTujuan)}'>
                             <td class="p-2 border-r text-center font-medium">${rowCount}</td>
-                            <td class="p-2 border-r font-bold text-slate-800">${item.desc}</td>
+                            <td class="p-2 border-r font-bold text-slate-800">
+                                ${item.desc}
+                                <div class="text-[10px] text-slate-500 font-normal">Kategori: ${item.category}</div>
+                            </td>
                             <td class="p-2 border-r text-center font-bold text-blue-700 bg-blue-50 stok-asal-cell" data-base="${totalStokAsal}">${totalStokAsal}</td>
                             <td class="p-2 border-r text-center">
                                 <input type="number" min="0" value="0" class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold outline-none focus:ring-1 focus:ring-blue-500" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
@@ -415,16 +429,12 @@
                             <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">${totalStokTujuan}</td>
                         </tr>
                     `;
-
-                    if (rowCount >= 300) break; // Batasi 300 item per view agar stabil
-                }
-
-                infoStatus.innerText = `Menampilkan ${rowCount} barang`;
+                });
 
                 if (rowCount === 0) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai dengan filter stok yang dipilih.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai kategori & filter stok tujuan tersebut.</td></tr>`;
                 }
-            }, 50);
+            }, 30);
         }
 
         function hitungKalkulasiExcel(inputElem, stokAsalMax, stokTujuanAwal) {
@@ -454,6 +464,7 @@
             sisaTujuanRes.innerText = sisaTujuan;
         }
 
+        // --- FITUR SIMPAN & DOWNLOAD OTOMATIS EXCEL ---
         function simpanFormPenarikan(jenisPenarikan) {
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
@@ -465,11 +476,19 @@
 
             const rows = document.querySelectorAll('.excel-row');
             let count = 0;
+            let excelExportData = [];
 
-            rows.forEach(row => {
+            // Tambahkan Header laporan untuk file Excel yang didownload
+            excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
+            excelExportData.push([`Jenis: ${jenisPenarikan}`, `Asal: ${selectedAsal.join(', ')}`, `Tujuan: ${selectedTujuan.join(', ')}`]);
+            excelExportData.push([]); // Baris kosong
+            excelExportData.push(["No", "Deskripsi Barang", "Total Stok Asal", "Jumlah Diajukan", "Jumlah Disetujui", "Total Stok Tujuan", "Keterangan", "Sisa Stok Asal", "Sisa Stok Tujuan"]);
+
+            rows.forEach((row, idx) => {
                 const itemIdx = row.getAttribute('data-item-idx');
                 const diajukan = parseInt(row.querySelector('.input-diajukan').value) || 0;
                 const disetujui = parseInt(row.querySelector('.input-disetujui').value) || 0;
+                const ket = row.querySelector('.input-ket').value;
 
                 if (disetujui > 0 || diajukan > 0) {
                     const item = masterStockData[itemIdx];
@@ -497,17 +516,42 @@
                         diajukan: diajukan,
                         disetujui: disetujui
                     });
+
+                    let stokAsalSisa = row.querySelector('.sisa-asal-res').innerText;
+                    let stokTujuanSisa = row.querySelector('.sisa-tujuan-res').innerText;
+
+                    excelExportData.push([
+                        count + 1,
+                        item.desc,
+                        row.querySelector('.stok-asal-cell').innerText,
+                        diajukan,
+                        disetujui,
+                        row.querySelector('.stok-tujuan-cell').innerText,
+                        ket,
+                        stokAsalSisa,
+                        stokTujuanSisa
+                    ]);
+
                     count++;
                 }
             });
 
             if (count === 0) {
-                alert("Tidak ada barang yang diisi jumlah pengajuannya.");
+                alert("Tidak ada barang yang diisi jumlah pengajuannya (diajukan/disetujui masih 0).");
                 return;
             }
 
             renderRekap();
-            alert(`${jenisPenarikan} berhasil disimpan!`);
+
+            // Ekspor dan Download otomatis ke file Excel (.xlsx)
+            const worksheet = XLSX.utils.aoa_to_sheet(excelExportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Pengajuan Penarikan");
+            
+            let fileName = `Pengajuan_${jenisPenarikan.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+
+            alert(`${jenisPenarikan} berhasil disimpan dan file Excel berhasil di-download!`);
             loadFormPenarikan(); 
         }
 
@@ -605,7 +649,7 @@
                     categories = [...new Set(masterStockData.map(item => item.category))];
                     initDropdowns();
                     renderStokTable();
-                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang dari ${warehouses.length} gudang.`);
+                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
                     alert("Terjadi kesalahan saat membaca file Excel.");
