@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PT. Glori Mitra Sukses - Manajemen Stok & Penarikan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS dengan modul lengkap untuk parsing .xls lama dan .xlsx -->
+    <!-- SheetJS CDN Lengkap -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
@@ -19,8 +19,8 @@
             </div>
             <div class="mt-4 md:mt-0 flex items-center space-x-3">
                 <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm cursor-pointer transition shadow flex items-center space-x-2">
-                    <span>📊 Upload File Stok (.xls / .xlsx)</span>
-                    <input type="file" id="excelUpload" accept=".xls, .xlsx" class="hidden">
+                    <span>📊 Upload File Excel Stok (.xls / .xlsx)</span>
+                    <input type="file" id="excelUpload" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
                 </label>
                 <button onclick="loadDefaultData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
                     🔄 Muat Data Contoh
@@ -98,7 +98,7 @@
                         </thead>
                         <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
                             <tr>
-                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok Anda.</td>
+                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok Anda (.xls / .xlsx).</td>
                             </tr>
                         </tbody>
                     </table>
@@ -570,7 +570,7 @@
             });
         }
 
-        // --- PARSER FILE EXCEL ROBUST MENDUKUNG SEMUA FORMAT (.XLS / .XLSX / BINARY) ---
+        // --- PARSER EXCEL ROBUST UNTUK SEMUA FORMAT EXCEL KANTOR ---
         document.getElementById('excelUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -580,14 +580,16 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Ambil sheet pertama secara otomatis
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    // Deteksi otomatis baris header yang mengandung 'Deskripsi Barang' atau 'KATAGORI'
+                    // Deteksi baris header (mencari baris yang mengandung 'Deskripsi Barang' atau 'KATAGORI')
                     let headerRowIdx = 0;
-                    for (let r = 0; r < Math.min(15, jsonRows.length); r++) {
+                    for (let r = 0; r < Math.min(10, jsonRows.length); r++) {
                         let rowStr = JSON.stringify(jsonRows[r]).toUpperCase();
                         if (rowStr.includes("KATAGORI") || rowStr.includes("KATEGORI") || rowStr.includes("DESKRIPSI")) {
                             headerRowIdx = r;
@@ -619,7 +621,7 @@
 
                     if (detectedWarehouses.length === 0) {
                         detectedWarehouses = ["SUNTR", "M2M", "CURUG", "SBY", "SEMARANG"];
-                        detectedWarehouses.forEach((w, i) => whIndices[w] = 3 + i);
+                        detectedWarehouses.forEach((w, i) => whIndices[w] = 2 + i);
                     }
 
                     warehouses = detectedWarehouses;
@@ -633,7 +635,6 @@
                         let desc = row[0] ? String(row[0]).trim() : "";
                         if (!desc || desc.toLowerCase().includes("total") || desc.toLowerCase().includes("cetak di")) continue;
 
-                        // Ambil kategori dari kolom Kategori/Katagori
                         if (katColIdx !== -1 && row[katColIdx]) {
                             let katVal = String(row[katColIdx]).trim();
                             if (katVal && katVal !== "0" && katVal !== "KATAGORI" && katVal !== "KATEGORI") {
@@ -660,10 +661,10 @@
                     categories = [...new Set(masterStockData.map(item => item.category))];
                     initDropdowns();
                     renderStokTable();
-                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang dari ${warehouses.length} gudang.`);
+                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
-                    alert("Terjadi kesalahan saat membaca file Excel. Pastikan file tidak sedang terkunci atau rusak.");
+                    alert("Terjadi kesalahan saat membaca file Excel. Pastikan file format .xls / .xlsx valid.");
                 }
             };
             reader.readAsArrayBuffer(file);
