@@ -19,7 +19,7 @@
             </div>
             <div class="mt-4 md:mt-0 flex items-center space-x-3">
                 <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm cursor-pointer transition shadow flex items-center space-x-2">
-                    <span>📊 Upload File Excel Stok Lengkap (.xls/.xlsx)</span>
+                    <span>📊 Upload File Excel Stok (.xls/.xlsx)</span>
                     <input type="file" id="excelUpload" accept=".xls, .xlsx" class="hidden">
                 </label>
                 <button onclick="loadDefaultData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
@@ -293,7 +293,6 @@
                 return;
             }
 
-            // Batasi render maksimal 500 baris agar browser tetap sangat cepat
             filtered.slice(0, 500).forEach(r => {
                 const status = getStatusInfo(r.qty);
                 tbody.innerHTML += `
@@ -468,7 +467,7 @@
             });
         }
 
-        // --- PARSER EXCEL OTOMATIS MENANGANI 1800+ BARIS ---
+        // --- PARSER EXCEL: KOREKSI BARIS HEADER (BARIS PERTAMA / INDEKS 0) ---
         document.getElementById('excelUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -483,15 +482,11 @@
                     
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    // Baris ke-4 (indeks 4) pada file excel Anda adalah header kolom
-                    let headerRowIdx = 4;
-                    if (jsonRows.length <= headerRowIdx) headerRowIdx = 0;
-                    
+                    // Baris header di file Anda berada di baris pertama (indeks 0)
+                    let headerRowIdx = 0;
                     const headers = jsonRows[headerRowIdx] || [];
                     
-                    let detectedWarehouses = [];
-                    let katColIdx = -1;
-                    
+                    let katColIdx = 1; // Default kolom kategori di indeks 1 (KATAGORI)
                     headers.forEach((h, idx) => {
                         let hStr = String(h).trim().toUpperCase();
                         if (hStr === "KATAGORI" || hStr === "KATEGORI") {
@@ -499,29 +494,18 @@
                         }
                     });
 
-                    // Jika kolom kategori ada di ujung kanan (misal indeks 18)
-                    if (katColIdx === -1) {
-                        for (let c = 0; c < headers.length; c++) {
-                            if (String(headers[c]).toUpperCase().includes("KAT")) katColIdx = c;
-                        }
-                    }
-
-                    // Daftar gudang standar dari header excel Anda
+                    // Deteksi kolom gudang dari baris header (indeks 0)
+                    let detectedWarehouses = [];
                     let whIndices = {};
                     headers.forEach((h, idx) => {
                         if (h && idx > 1 && idx !== katColIdx) {
                             let wName = String(h).trim();
-                            if (wName && wName !== "PRDCT" && wName !== "undefined") {
+                            if (wName && wName !== "undefined") {
                                 detectedWarehouses.push(wName);
                                 whIndices[wName] = idx;
                             }
                         }
                     });
-
-                    if (detectedWarehouses.length === 0) {
-                        detectedWarehouses = ["SUNTR", "M2M", "CURUG", "SBY", "BANDUNG", "SEMARANG"];
-                        detectedWarehouses.forEach((w, idx) => whIndices[w] = 3 + idx);
-                    }
 
                     warehouses = detectedWarehouses;
                     masterStockData = [];
@@ -534,11 +518,9 @@
                         let desc = row[0] ? String(row[0]).trim() : "";
                         if (!desc || desc.toLowerCase().includes("total") || desc.toLowerCase().includes("cetak di")) continue;
 
-                        // Ambil kategori dari kolom KATAGORI
+                        // Ambil kategori dari kolom Kategori
                         if (katColIdx !== -1 && row[katColIdx]) {
                             currentCategory = String(row[katColIdx]).trim();
-                        } else if (row[1] && String(row[1]).trim() !== "0") {
-                            currentCategory = String(row[1]).trim();
                         }
 
                         let qtys = {};
@@ -561,7 +543,7 @@
                     alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang dari ${warehouses.length} gudang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
-                    alert("Terjadi kesalahan saat membaca file Excel. Pastikan format file sesuai.");
+                    alert("Terjadi kesalahan saat membaca file Excel.");
                 }
             };
             reader.readAsArrayBuffer(file);
