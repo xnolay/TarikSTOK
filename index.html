@@ -19,10 +19,10 @@
             </div>
             <div class="mt-4 md:mt-0 flex items-center space-x-3">
                 <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm cursor-pointer transition shadow flex items-center space-x-2">
-                    <span>📊 Upload File Excel Stok (.xls/.xlsx)</span>
+                    <span>📊 Upload File Excel Stok Lengkap (.xls/.xlsx)</span>
                     <input type="file" id="excelUpload" accept=".xls, .xlsx" class="hidden">
                 </label>
-                <button onclick="loadSampleData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
+                <button onclick="loadDefaultData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
                     🔄 Muat Data Contoh
                 </button>
             </div>
@@ -47,7 +47,7 @@
         <!-- TAB 1: MENU STOK -->
         <section id="section-stok" class="space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-slate-700 mb-4">Filter Data Stok</h2>
+                <h2 class="text-lg font-bold text-slate-700 mb-4">Filter Data Stok (Total Item: <span id="totalItemCount">0</span>)</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Cari Deskripsi Barang</label>
@@ -85,20 +85,20 @@
 
             <!-- Tabel Stok -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
-                                <th class="p-3 border-b">Deskripsi Barang</th>
-                                <th class="p-3 border-b">Kategori</th>
-                                <th class="p-3 border-b">Gudang</th>
-                                <th class="p-3 border-b text-center">Qty</th>
-                                <th class="p-3 border-b text-center">Status</th>
+                <div class="overflow-x-auto max-h-[600px]">
+                    <table class="w-full text-left border-collapse sticky top-0">
+                        <thead class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 border-b bg-slate-100">Deskripsi Barang</th>
+                                <th class="p-3 border-b bg-slate-100">Kategori</th>
+                                <th class="p-3 border-b bg-slate-100">Gudang</th>
+                                <th class="p-3 border-b bg-slate-100 text-center">Qty</th>
+                                <th class="p-3 border-b bg-slate-100 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
                             <tr>
-                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok Anda atau muat data contoh.</td>
+                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok lengkap Anda (`.xls`/`.xlsx`).</td>
                             </tr>
                         </tbody>
                     </table>
@@ -106,10 +106,8 @@
             </div>
         </section>
 
-        <!-- TAB 2: VISUALISASI PENARIKAN BARANG (FORMAT EXCEL STYLE) -->
+        <!-- TAB 2: VISUALISASI PENARIKAN BARANG -->
         <section id="section-penarikan" class="hidden space-y-6">
-            
-            <!-- Header Konfigurasi Gudang & Aksi -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                     <div>
@@ -135,29 +133,28 @@
                 </div>
             </div>
 
-            <!-- Tabel Form Penarikan Menyerupai Format Excel -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
                     <h3 class="font-bold text-sm tracking-wide">PENGAJUAN PENARIKAN BARANG</h3>
                     <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Pilih Gudang Asal & Tujuan di atas</span>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left border-collapse text-xs">
-                        <thead>
+                        <thead class="sticky top-0 z-10">
                             <tr class="bg-slate-200 text-slate-700 uppercase border-b">
-                                <th rowspan="2" class="p-2 border-r align-middle text-center w-12">No</th>
-                                <th rowspan="2" class="p-2 border-r align-middle">Deskripsi Barang</th>
+                                <th rowspan="2" class="p-2 border-r align-middle text-center w-12 bg-slate-200">No</th>
+                                <th rowspan="2" class="p-2 border-r align-middle bg-slate-200">Deskripsi Barang</th>
                                 <th rowspan="2" class="p-2 border-r align-middle text-center bg-blue-100" id="thAsalLabel">Stok Asal</th>
                                 <th colspan="2" class="p-2 border-r text-center bg-amber-100">Jumlah Ingin Ditarik</th>
                                 <th rowspan="2" class="p-2 border-r align-middle text-center bg-emerald-100" id="thTujuanLabel">Stok Tujuan</th>
-                                <th rowspan="2" class="p-2 border-r align-middle">Keterangan</th>
+                                <th rowspan="2" class="p-2 border-r align-middle bg-slate-200">Keterangan</th>
                                 <th colspan="2" class="p-2 text-center bg-yellow-200">Stok Setelah Diajukan</th>
                             </tr>
                             <tr class="bg-slate-100 text-slate-700 text-center border-b font-semibold">
-                                <th class="p-1.5 border-r w-24">Diajukan</th>
-                                <th class="p-1.5 border-r w-24">Disetujui</th>
-                                <th class="p-1.5 border-r w-24">Stok Asal</th>
-                                <th class="p-1.5 w-24">Stok Tujuan</th>
+                                <th class="p-1.5 border-r w-24 bg-slate-100">Diajukan</th>
+                                <th class="p-1.5 border-r w-24 bg-slate-100">Disetujui</th>
+                                <th class="p-1.5 border-r w-24 bg-yellow-100">Stok Asal</th>
+                                <th class="p-1.5 w-24 bg-yellow-100">Stok Tujuan</th>
                             </tr>
                         </thead>
                         <tbody id="excelTableBody" class="divide-y divide-slate-200">
@@ -169,7 +166,6 @@
                 </div>
             </div>
 
-            <!-- Tabel Rekap / Riwayat Laporan -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <h3 class="text-md font-bold text-slate-700 border-b pb-2">📋 Riwayat & Log Pengajuan Penarikan</h3>
                 <div class="overflow-x-auto">
@@ -219,16 +215,17 @@
             }
         }
 
+        function loadDefaultData() {
+            loadSampleData();
+        }
+
         function loadSampleData() {
             masterStockData = [
                 { category: "COUGAR", desc: "SIDE PANEL ACRYLIC FOR QBX 2MM", qtys: {"SUNTR": 12, "CURUG": 0, "SBY": 0, "M2M": 0, "SEMARANG": 0} },
-                { category: "COUGAR", desc: "Cougar case AIRFACE 180 White", qtys: {"SUNTR": 9, "CURUG": 0, "SBY": 0, "M2M": 2, "SEMARANG": 0} },
-                { category: "COUGAR", desc: "CASE AIRFACE ECO RGB", qtys: {"SUNTR": 1, "CURUG": 0, "SBY": 0, "M2M": 1, "SEMARANG": 0} },
-                { category: "COUGAR", desc: "Case AIRFACE ECO RGB White", qtys: {"SUNTR": 4, "CURUG": 0, "SBY": 0, "M2M": 1, "SEMARANG": 0} },
-                { category: "COUGAR", desc: "CASE AIRFACE RGB Black", qtys: {"SUNTR": 1, "CURUG": 0, "SBY": 0, "M2M": 4, "SEMARANG": 0} },
-                { category: "COUGAR", desc: "CASE AIRFACE RGB White", qtys: {"SUNTR": 16, "CURUG": 0, "SBY": 0, "M2M": 2, "SEMARANG": 0} }
+                { category: "COUGAR", desc: "Cougar case AIRFACE 180 White", qtys: {"SUNTR": 9, "CURUG": 0, "SBY": 2, "M2M": 2, "SEMARANG": 0} },
+                { category: "COUGAR", desc: "CASE AIRFACE ECO RGB", qtys: {"SUNTR": 1, "CURUG": 0, "SBY": 1, "M2M": 1, "SEMARANG": 0} }
             ];
-            warehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG"];
+            warehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG", "PRDCT"];
             categories = [...new Set(masterStockData.map(item => item.category))];
             
             initDropdowns();
@@ -248,6 +245,8 @@
             categories.forEach(k => {
                 katSelect.innerHTML += `<option value="${k}">${k}</option>`;
             });
+
+            document.getElementById('totalItemCount').innerText = masterStockData.length;
         }
 
         function getStatusInfo(qty) {
@@ -287,14 +286,15 @@
                 return matchSku && matchKat && matchGudang && matchStatus;
             });
 
-            countStatus.innerText = `Menampilkan ${filtered.length} baris data stok`;
+            countStatus.innerText = `Menampilkan ${filtered.length} baris data (dari total ${rows.length} baris)`;
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Tidak ada data stok yang sesuai filter.</td></tr>`;
                 return;
             }
 
-            filtered.slice(0, 200).forEach(r => {
+            // Batasi render maksimal 500 baris agar browser tetap sangat cepat
+            filtered.slice(0, 500).forEach(r => {
                 const status = getStatusInfo(r.qty);
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
@@ -468,7 +468,7 @@
             });
         }
 
-        // --- PARSER EXCEL OTOMATIS MENGGUNAKAN SHEETJS ---
+        // --- PARSER EXCEL OTOMATIS MENANGANI 1800+ BARIS ---
         document.getElementById('excelUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -481,34 +481,46 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     
-                    // Konversi sheet ke JSON array
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    // Deteksi baris header gudang (biasanya di baris ke-5 / indeks ke-4 pada format PT Glori)
+                    // Baris ke-4 (indeks 4) pada file excel Anda adalah header kolom
                     let headerRowIdx = 4;
                     if (jsonRows.length <= headerRowIdx) headerRowIdx = 0;
                     
                     const headers = jsonRows[headerRowIdx] || [];
                     
-                    // Tentukan kolom gudang dan kategori
                     let detectedWarehouses = [];
-                    let katColIdx = headers.indexOf("KATAGORI");
-                    if (katColIdx === -1) katColIdx = headers.indexOf("KATEGORI");
-
-                    // Kolom gudang standar PT Glori berdasarkan layout Excel
-                    const possibleWarehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG", "HO-SUNTER", "BANDUNG"];
+                    let katColIdx = -1;
                     
+                    headers.forEach((h, idx) => {
+                        let hStr = String(h).trim().toUpperCase();
+                        if (hStr === "KATAGORI" || hStr === "KATEGORI") {
+                            katColIdx = idx;
+                        }
+                    });
+
+                    // Jika kolom kategori ada di ujung kanan (misal indeks 18)
+                    if (katColIdx === -1) {
+                        for (let c = 0; c < headers.length; c++) {
+                            if (String(headers[c]).toUpperCase().includes("KAT")) katColIdx = c;
+                        }
+                    }
+
+                    // Daftar gudang standar dari header excel Anda
                     let whIndices = {};
                     headers.forEach((h, idx) => {
-                        if (h && possibleWarehouses.includes(String(h).trim())) {
-                            detectedWarehouses.push(String(h).trim());
-                            whIndices[String(h).trim()] = idx;
+                        if (h && idx > 1 && idx !== katColIdx) {
+                            let wName = String(h).trim();
+                            if (wName && wName !== "PRDCT" && wName !== "undefined") {
+                                detectedWarehouses.push(wName);
+                                whIndices[wName] = idx;
+                            }
                         }
                     });
 
                     if (detectedWarehouses.length === 0) {
                         detectedWarehouses = ["SUNTR", "M2M", "CURUG", "SBY", "BANDUNG", "SEMARANG"];
-                        detectedWarehouses.forEach(w => whIndices[w] = 3); // Fallback
+                        detectedWarehouses.forEach((w, idx) => whIndices[w] = 3 + idx);
                     }
 
                     warehouses = detectedWarehouses;
@@ -522,14 +534,17 @@
                         let desc = row[0] ? String(row[0]).trim() : "";
                         if (!desc || desc.toLowerCase().includes("total") || desc.toLowerCase().includes("cetak di")) continue;
 
+                        // Ambil kategori dari kolom KATAGORI
                         if (katColIdx !== -1 && row[katColIdx]) {
                             currentCategory = String(row[katColIdx]).trim();
+                        } else if (row[1] && String(row[1]).trim() !== "0") {
+                            currentCategory = String(row[1]).trim();
                         }
 
                         let qtys = {};
                         detectedWarehouses.forEach(w => {
                             let colIdx = whIndices[w];
-                            let val = row[colIdx] !== undefined ? parseFloat(row[colIdx]) : 0;
+                            let val = (colIdx !== undefined && row[colIdx] !== undefined) ? parseFloat(row[colIdx]) : 0;
                             qtys[w] = isNaN(val) ? 0 : val;
                         });
 
@@ -543,7 +558,7 @@
                     categories = [...new Set(masterStockData.map(item => item.category))];
                     initDropdowns();
                     renderStokTable();
-                    alert(`File Excel "${file.name}" berhasil diunggah! Berhasil memuat ${masterStockData.length} data barang.`);
+                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang dari ${warehouses.length} gudang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
                     alert("Terjadi kesalahan saat membaca file Excel. Pastikan format file sesuai.");
