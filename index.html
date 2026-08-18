@@ -125,11 +125,11 @@
                     </div>
                 </div>
 
-                <!-- Filter Stok Tambahan -->
+                <!-- Filter Stok Tambahan & Tombol Eksekusi -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t items-center">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Stok Asal/Tujuan:</label>
-                        <select id="filterStokPenarikan" onchange="loadFormPenarikan()" class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium">
+                        <select id="filterStokPenarikan" class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium">
                             <option value="all">Semua Stok</option>
                             <option value="lt10">Stok &lt; 10</option>
                             <option value="lt50">Stok &lt; 50</option>
@@ -154,7 +154,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
                     <h3 class="font-bold text-sm tracking-wide">PENGAJUAN PENARIKAN BARANG</h3>
-                    <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Centang Gudang Asal & Tujuan di atas</span>
+                    <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Centang gudang & klik "Terapkan Pilihan & Filter"</span>
                 </div>
                 <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left border-collapse text-xs">
@@ -177,7 +177,7 @@
                         </thead>
                         <tbody id="excelTableBody" class="divide-y divide-slate-200">
                             <tr>
-                                <td colspan="9" class="p-8 text-center text-slate-400">Silakan centang Gudang Asal dan Gudang Tujuan untuk memuat daftar barang.</td>
+                                <td colspan="9" class="p-8 text-center text-slate-400">Silakan centang Gudang Asal, Gudang Tujuan, lalu klik tombol "Terapkan Pilihan & Filter".</td>
                             </tr>
                         </tbody>
                     </table>
@@ -336,13 +336,13 @@
             warehouses.forEach(w => {
                 containerAsal.innerHTML += `
                     <label class="flex items-center space-x-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                        <input type="checkbox" value="${w}" class="chk-asal rounded text-blue-600 focus:ring-blue-500" onchange="loadFormPenarikan()">
+                        <input type="checkbox" value="${w}" class="chk-asal rounded text-blue-600 focus:ring-blue-500">
                         <span>${w}</span>
                     </label>
                 `;
                 containerTujuan.innerHTML += `
                     <label class="flex items-center space-x-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                        <input type="checkbox" value="${w}" class="chk-tujuan rounded text-emerald-600 focus:ring-emerald-500" onchange="loadFormPenarikan()">
+                        <input type="checkbox" value="${w}" class="chk-tujuan rounded text-emerald-600 focus:ring-emerald-500">
                         <span>${w}</span>
                     </label>
                 `;
@@ -357,67 +357,74 @@
             const infoStatus = document.getElementById('excelInfoStatus');
 
             if (selectedAsal.length === 0 || selectedTujuan.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan di atas.</td></tr>`;
-                infoStatus.innerText = "Pilih gudang asal & tujuan (checkbox)";
+                alert("Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan, kemudian klik Terapkan.");
                 return;
             }
 
-            infoStatus.innerText = `Asal: [${selectedAsal.join(', ')}] ➔ Tujuan: [${selectedTujuan.join(', ')}]`;
-            tbody.innerHTML = '';
+            infoStatus.innerText = `Memproses data (${selectedAsal.length} Asal, ${selectedTujuan.length} Tujuan)...`;
+            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang, mohon sebentar...</td></tr>`;
 
-            let rowCount = 0;
-            masterStockData.forEach((item, index) => {
-                // Hitung total stok dari gudang-gudang asal yang dicentang
-                let totalStokAsal = 0;
-                selectedAsal.forEach(asalW => {
-                    let base = item.qtys[asalW] || 0;
-                    let ded = (stateDeductions[index] && stateDeductions[index][asalW]) ? stateDeductions[index][asalW] : 0;
-                    totalStokAsal += Math.max(0, base - ded);
-                });
+            setTimeout(() => {
+                tbody.innerHTML = '';
+                let rowCount = 0;
 
-                // Hitung total stok dari gudang-gudang tujuan yang dicentang
-                let totalStokTujuan = 0;
-                selectedTujuan.forEach(tujuanW => {
-                    totalStokTujuan += (item.qtys[tujuanW] || 0);
-                });
+                // Batasi pemrosesan maksimal 300 baris pertama yang cocok agar browser tetap sangat cepat
+                for (let index = 0; index < masterStockData.length; index++) {
+                    let item = masterStockData[index];
 
-                // Terapkan filter stok tambahan (<10, <50, >50)
-                let matchFilter = true;
-                if (filterStok === 'lt10') {
-                    if (totalStokAsal >= 10 && totalStokTujuan >= 10) matchFilter = false;
-                } else if (filterStok === 'lt50') {
-                    if (totalStokAsal >= 50 && totalStokTujuan >= 50) matchFilter = false;
-                } else if (filterStok === 'gt50') {
-                    if (totalStokAsal <= 50 && totalStokTujuan <= 50) matchFilter = false;
+                    let totalStokAsal = 0;
+                    selectedAsal.forEach(asalW => {
+                        let base = item.qtys[asalW] || 0;
+                        let ded = (stateDeductions[index] && stateDeductions[index][asalW]) ? stateDeductions[index][asalW] : 0;
+                        totalStokAsal += Math.max(0, base - ded);
+                    });
+
+                    let totalStokTujuan = 0;
+                    selectedTujuan.forEach(tujuanW => {
+                        totalStokTujuan += (item.qtys[tujuanW] || 0);
+                    });
+
+                    let matchFilter = true;
+                    if (filterStok === 'lt10') {
+                        if (totalStokAsal >= 10 && totalStokTujuan >= 10) matchFilter = false;
+                    } else if (filterStok === 'lt50') {
+                        if (totalStokAsal >= 50 && totalStokTujuan >= 50) matchFilter = false;
+                    } else if (filterStok === 'gt50') {
+                        if (totalStokAsal <= 50 && totalStokTujuan <= 50) matchFilter = false;
+                    }
+
+                    if (!matchFilter) continue;
+                    rowCount++;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 excel-row" data-item-idx="${index}" data-asal='${JSON.stringify(selectedAsal)}' data-tujuan='${JSON.stringify(selectedTujuan)}'>
+                            <td class="p-2 border-r text-center font-medium">${rowCount}</td>
+                            <td class="p-2 border-r font-bold text-slate-800">${item.desc}</td>
+                            <td class="p-2 border-r text-center font-bold text-blue-700 bg-blue-50 stok-asal-cell" data-base="${totalStokAsal}">${totalStokAsal}</td>
+                            <td class="p-2 border-r text-center">
+                                <input type="number" min="0" value="0" class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold outline-none focus:ring-1 focus:ring-blue-500" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
+                            </td>
+                            <td class="p-2 border-r text-center">
+                                <input type="number" min="0" value="0" class="input-disetujui border rounded px-1.5 py-1 text-xs w-20 text-center font-bold outline-none focus:ring-1 focus:ring-indigo-500" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
+                            </td>
+                            <td class="p-2 border-r text-center font-bold text-emerald-700 bg-emerald-50 stok-tujuan-cell">${totalStokTujuan}</td>
+                            <td class="p-2 border-r">
+                                <input type="text" placeholder="Keterangan..." class="input-ket border rounded px-2 py-1 text-xs w-full outline-none">
+                            </td>
+                            <td class="p-2 border-r text-center font-bold text-red-600 sisa-asal-res">${totalStokAsal}</td>
+                            <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">${totalStokTujuan}</td>
+                        </tr>
+                    `;
+
+                    if (rowCount >= 300) break; // Batasi 300 item per view agar stabil
                 }
 
-                if (!matchFilter) return;
-                rowCount++;
+                infoStatus.innerText = `Menampilkan ${rowCount} barang`;
 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 excel-row" data-item-idx="${index}" data-asal='${JSON.stringify(selectedAsal)}' data-tujuan='${JSON.stringify(selectedTujuan)}'>
-                        <td class="p-2 border-r text-center font-medium">${rowCount}</td>
-                        <td class="p-2 border-r font-bold text-slate-800">${item.desc}</td>
-                        <td class="p-2 border-r text-center font-bold text-blue-700 bg-blue-50 stok-asal-cell" data-base="${totalStokAsal}">${totalStokAsal}</td>
-                        <td class="p-2 border-r text-center">
-                            <input type="number" min="0" value="0" class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold outline-none focus:ring-1 focus:ring-blue-500" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
-                        </td>
-                        <td class="p-2 border-r text-center">
-                            <input type="number" min="0" value="0" class="input-disetujui border rounded px-1.5 py-1 text-xs w-20 text-center font-bold outline-none focus:ring-1 focus:ring-indigo-500" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
-                        </td>
-                        <td class="p-2 border-r text-center font-bold text-emerald-700 bg-emerald-50 stok-tujuan-cell">${totalStokTujuan}</td>
-                        <td class="p-2 border-r">
-                            <input type="text" placeholder="Keterangan..." class="input-ket border rounded px-2 py-1 text-xs w-full outline-none">
-                        </td>
-                        <td class="p-2 border-r text-center font-bold text-red-600 sisa-asal-res">${totalStokAsal}</td>
-                        <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">${totalStokTujuan}</td>
-                    </tr>
-                `;
-            });
-
-            if (rowCount === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai dengan filter stok yang dipilih.</td></tr>`;
-            }
+                if (rowCount === 0) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai dengan filter stok yang dipilih.</td></tr>`;
+                }
+            }, 50);
         }
 
         function hitungKalkulasiExcel(inputElem, stokAsalMax, stokTujuanAwal) {
@@ -467,7 +474,6 @@
                 if (disetujui > 0 || diajukan > 0) {
                     const item = masterStockData[itemIdx];
 
-                    // Kurangi stok dari gudang asal yang dicentang secara proporsional/berurutan
                     let sisaToDeduct = disetujui;
                     selectedAsal.forEach(asalW => {
                         if (sisaToDeduct <= 0) return;
