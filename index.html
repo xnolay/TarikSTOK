@@ -18,7 +18,7 @@
             </div>
             <div class="mt-4 md:mt-0 flex items-center space-x-3">
                 <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm cursor-pointer transition shadow flex items-center space-x-2">
-                    <span>📊 Upload File Stok (.xls / .xlsx)</span>
+                    <span>📊 Upload File Excel (.xlsx / .xls)</span>
                     <input type="file" id="excelUpload" accept=".xls, .xlsx" class="hidden">
                 </label>
                 <button onclick="loadDefaultData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
@@ -97,7 +97,7 @@
                         </thead>
                         <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
                             <tr>
-                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok (.xls / .xlsx).</td>
+                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok Anda (.xlsx).</td>
                             </tr>
                         </tbody>
                     </table>
@@ -384,7 +384,6 @@
                         totalStokTujuan += (item.qtys[tujuanW] || 0);
                     });
 
-                    // Aturan: Jika stok asal dan tujuan sama-sama 0, jangan tampilkan
                     if (totalStokAsal === 0 && totalStokTujuan === 0) return;
 
                     let matchFilter = true;
@@ -570,7 +569,7 @@
             });
         }
 
-        // --- PARSER EXCEL PRESISI BERDASARKAN FORMAT FILE KANTOR ANDA ---
+        // --- PARSER EXCEL FINAL (MENDUKUNG FORMAT HEADER DI BARIS 0) ---
         document.getElementById('excelUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -586,19 +585,16 @@
                     
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    // Header berada di baris pertama (indeks 0) berdasarkan file kantor Anda
-                    let headerRowIdx = 0;
-                    for (let r = 0; r < Math.min(5, jsonRows.length); r++) {
-                        let rowStr = JSON.stringify(jsonRows[r]).toUpperCase();
-                        if (rowStr.includes("DESKRIPSI") || rowStr.includes("KATAGORI") || rowStr.includes("SUNTR")) {
-                            headerRowIdx = r;
-                            break;
-                        }
+                    if (!jsonRows || jsonRows.length === 0) {
+                        alert("File Excel kosong atau tidak terbaca.");
+                        return;
                     }
 
+                    // Baris header persis di baris pertama (indeks 0) sesuai file kantor Anda
+                    let headerRowIdx = 0;
                     const headers = jsonRows[headerRowIdx] || [];
                     
-                    let katColIdx = 1; 
+                    let katColIdx = 1; // Kolom KATAGORI
                     headers.forEach((h, idx) => {
                         let hStr = String(h).trim().toUpperCase();
                         if (hStr === "KATAGORI" || hStr === "KATEGORI") {
@@ -617,6 +613,11 @@
                             }
                         }
                     });
+
+                    if (detectedWarehouses.length === 0) {
+                        detectedWarehouses = ["SUNTR", "M2M", "CURUG", "SBY", "SEMARANG"];
+                        detectedWarehouses.forEach((w, i) => whIndices[w] = 2 + i);
+                    }
 
                     warehouses = detectedWarehouses;
                     masterStockData = [];
@@ -653,10 +654,10 @@
                     categories = [...new Set(masterStockData.map(item => item.category))];
                     initDropdowns();
                     renderStokTable();
-                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang dari ${warehouses.length} gudang.`);
+                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
-                    alert("Terjadi kesalahan saat membaca file Excel.");
+                    alert("Gagal membaca file Excel. Tips: Save As file Excel Anda ke format .xlsx (Excel Workbook terbaru) lalu upload ulang.");
                 }
             };
             reader.readAsArrayBuffer(file);
