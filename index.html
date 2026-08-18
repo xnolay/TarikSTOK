@@ -230,7 +230,7 @@
                 document.getElementById('tab-penarikan').className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none transition";
                 document.getElementById('tab-stok').className = "py-3 px-4 font-semibold text-slate-500 hover:text-blue-600 focus:outline-none transition";
                 initPenarikanCheckboxes();
-                loadFormPenarikan(); // Otomatis muat sesuai kategori yang dipilih di menu stok
+                loadFormPenarikan(); 
             }
         }
 
@@ -242,7 +242,7 @@
             masterStockData = [
                 { category: "COUGAR", desc: "SIDE PANEL ACRYLIC FOR QBX 2MM", qtys: {"SUNTR": 12, "CURUG": 0, "SBY": 5, "M2M": 0, "SEMARANG": 2} },
                 { category: "FIBER Kabel", desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2", qtys: {"SUNTR": 9, "CURUG": 2, "SBY": 45, "M2M": 2, "SEMARANG": 0} },
-                { category: "FIBER Kabel", desc: "FO CABLE eHOSE AIRBLOWN 12 CORE", qtys: {"SUNTR": 1, "CURUG": 60, "SBY": 1, "M2M": 1, "SEMARANG": 0} }
+                { category: "FIBER Kabel", desc: "FO CABLE eHOSE AIRBLOWN 12 CORE", qtys: {"SUNTR": 0, "CURUG": 0, "SBY": 0, "M2M": 0, "SEMARANG": 0} }
             ];
             warehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG", "PRDCT"];
             categories = [...new Set(masterStockData.map(item => item.category))];
@@ -332,7 +332,6 @@
             const containerAsal = document.getElementById('containerAsal');
             const containerTujuan = document.getElementById('containerTujuan');
             
-            // Simpan status centang sebelumnya jika ada
             let checkedAsalOld = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             let checkedTujuanOld = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
 
@@ -362,7 +361,7 @@
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
             const filterStokTujuan = document.getElementById('filterStokPenarikan').value;
-            const activeCategory = document.getElementById('filterKategori').value; // Ambil kategori dari menu stok
+            const activeCategory = document.getElementById('filterKategori').value; 
             const tbody = document.getElementById('excelTableBody');
             const infoStatus = document.getElementById('excelInfoStatus');
 
@@ -372,14 +371,13 @@
             }
 
             infoStatus.innerText = `Kategori: ${activeCategory || 'Semua'} | Asal: [${selectedAsal.join(', ')}] ➔ Tujuan: [${selectedTujuan.join(', ')}]`;
-            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang sesuai kategori...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang...</td></tr>`;
 
             setTimeout(() => {
                 tbody.innerHTML = '';
                 let rowCount = 0;
 
                 masterStockData.forEach((item, index) => {
-                    // Filter berdasarkan kategori yang dipilih di Menu Stok
                     if (activeCategory && item.category !== activeCategory) return;
 
                     let totalStokAsal = 0;
@@ -393,6 +391,9 @@
                     selectedTujuan.forEach(tujuanW => {
                         totalStokTujuan += (item.qtys[tujuanW] || 0);
                     });
+
+                    // ATURAN BARU: Apabila Asal DAN Tujuan sama-sama 0, jangan tampilkan
+                    if (totalStokAsal === 0 && totalStokTujuan === 0) return;
 
                     // Filter Stok KHUSUS GUDANG TUJUAN
                     let matchFilter = true;
@@ -429,10 +430,12 @@
                             <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">${totalStokTujuan}</td>
                         </tr>
                     `;
+
+                    if (rowCount >= 400) break; 
                 });
 
                 if (rowCount === 0) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai kategori & filter stok tujuan tersebut.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai kategori & filter stok tujuan tersebut (item dengan asal & tujuan 0 disembunyikan).</td></tr>`;
                 }
             }, 30);
         }
@@ -464,7 +467,6 @@
             sisaTujuanRes.innerText = sisaTujuan;
         }
 
-        // --- FITUR SIMPAN & DOWNLOAD OTOMATIS EXCEL ---
         function simpanFormPenarikan(jenisPenarikan) {
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
@@ -478,13 +480,12 @@
             let count = 0;
             let excelExportData = [];
 
-            // Tambahkan Header laporan untuk file Excel yang didownload
             excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
             excelExportData.push([`Jenis: ${jenisPenarikan}`, `Asal: ${selectedAsal.join(', ')}`, `Tujuan: ${selectedTujuan.join(', ')}`]);
-            excelExportData.push([]); // Baris kosong
+            excelExportData.push([]); 
             excelExportData.push(["No", "Deskripsi Barang", "Total Stok Asal", "Jumlah Diajukan", "Jumlah Disetujui", "Total Stok Tujuan", "Keterangan", "Sisa Stok Asal", "Sisa Stok Tujuan"]);
 
-            rows.forEach((row, idx) => {
+            rows.forEach((row) => {
                 const itemIdx = row.getAttribute('data-item-idx');
                 const diajukan = parseInt(row.querySelector('.input-diajukan').value) || 0;
                 const disetujui = parseInt(row.querySelector('.input-disetujui').value) || 0;
@@ -543,7 +544,6 @@
 
             renderRekap();
 
-            // Ekspor dan Download otomatis ke file Excel (.xlsx)
             const worksheet = XLSX.utils.aoa_to_sheet(excelExportData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Pengajuan Penarikan");
