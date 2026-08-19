@@ -1,371 +1,3 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT. Glori Mitra Sukses - Manajemen Stok & Penarikan</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <style>
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            opacity: 1;
-        }
-    </style>
-</head>
-
-<body class="bg-slate-50 text-slate-800 font-sans">
-
-<header class="bg-blue-900 text-white shadow-md">
-    <div class="container mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 class="text-xl font-bold">PT. GLORI MITRA SUKSES</h1>
-            <p class="text-xs text-blue-200">
-                Sistem Manajemen Stok & Penarikan Barang
-                <span id="tanggalUpdate"></span>
-            </p>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-center gap-2">
-            <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded cursor-pointer transition shadow flex items-center gap-2 text-sm">
-                <span>📊 Upload Excel Stok (.xls / .xlsx)</span>
-                <input
-                    type="file"
-                    id="excelUpload"
-                    accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    class="hidden"
-                >
-            </label>
-
-            <button
-                onclick="loadDefaultData()"
-                class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
-                🔄 Muat Data Contoh
-            </button>
-        </div>
-    </div>
-</header>
-
-<nav class="bg-white shadow border-b">
-    <div class="container mx-auto px-6 flex space-x-6">
-        <button
-            onclick="switchTab('stok')"
-            id="tab-stok"
-            class="py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600">
-            📦 Menu Stok
-        </button>
-
-        <button
-            onclick="switchTab('penarikan')"
-            id="tab-penarikan"
-            class="py-3 px-4 font-semibold text-slate-500">
-            📊 Visualisasi Penarikan Barang
-        </button>
-    </div>
-</nav>
-
-<main class="container mx-auto px-6 py-8">
-
-    <!-- STATUS EXCEL -->
-    <div id="uploadStatus" class="mb-6 hidden rounded-lg border px-4 py-3 text-sm"></div>
-
-    <!-- TAB STOK -->
-    <section id="section-stok" class="space-y-6">
-
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-700">
-                        Filter Data Stok
-                        (Total Item: <span id="totalItemCount">0</span>)
-                    </h2>
-
-                    <p id="excelFileInfo" class="text-xs text-slate-400 mt-1">
-                        Belum ada file Excel yang diunggah.
-                    </p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">
-                        Cari Deskripsi Barang
-                    </label>
-                    <input
-                        type="text"
-                        id="filterSku"
-                        placeholder="Contoh: AIRFACE, CABLE..."
-                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">
-                        Kategori Barang
-                    </label>
-                    <select
-                        id="filterKategori"
-                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Semua Kategori</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">
-                        Pilih Gudang
-                    </label>
-                    <select
-                        id="filterGudang"
-                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Semua Gudang</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">
-                        Status Stok
-                    </label>
-                    <select
-                        id="filterStatus"
-                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Semua Status</option>
-                        <option value="0">Kosong (0)</option>
-                        <option value="menipis">Menipis (1 - 5)</option>
-                        <option value="aman">Aman (&gt; 5)</option>
-                    </select>
-                </div>
-
-            </div>
-
-            <div class="mt-4 flex justify-between items-center">
-                <span id="stokCountStatus" class="text-xs text-slate-500 font-medium">
-                    Belum ada data.
-                </span>
-
-                <button
-                    onclick="renderStokTable()"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg text-sm transition shadow-sm">
-                    Terapkan Filter
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto max-h-[600px]">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider sticky top-0 z-10">
-                        <tr>
-                            <th class="p-3 border-b bg-slate-100">Deskripsi Barang</th>
-                            <th class="p-3 border-b bg-slate-100">Kategori</th>
-                            <th class="p-3 border-b bg-slate-100">Gudang</th>
-                            <th class="p-3 border-b bg-slate-100 text-center">Qty</th>
-                            <th class="p-3 border-b bg-slate-100 text-center">Status</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
-                        <tr>
-                            <td colspan="5" class="p-6 text-center text-slate-400">
-                                Silakan unggah file Excel stok Anda.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </section>
-
-    <!-- TAB PENARIKAN -->
-    <section id="section-penarikan" class="hidden space-y-6">
-
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                        Pilih Gudang Asal (Bisa Centang Banyak)
-                    </label>
-
-                    <div id="containerAsal"
-                         class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 bg-white rounded border">
-                    </div>
-                </div>
-
-                <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                        Pilih Gudang Tujuan (Bisa Centang Banyak)
-                    </label>
-
-                    <div id="containerTujuan"
-                         class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 bg-white rounded border">
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t items-center">
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">
-                        Filter Stok Gudang Tujuan
-                    </label>
-
-                    <select
-                        id="filterStokPenarikan"
-                        class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium">
-                        <option value="all">Semua Stok Tujuan</option>
-                        <option value="lt10">Stok Tujuan &lt; 10</option>
-                        <option value="lt50">Stok Tujuan &lt; 50</option>
-                        <option value="gt50">Stok Tujuan &gt; 50</option>
-                    </select>
-                </div>
-
-                <div class="md:col-span-2 flex flex-wrap justify-end gap-2 pt-2">
-
-                    <button
-                        onclick="loadFormPenarikan()"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
-                        🔍 Terapkan Pilihan & Filter
-                    </button>
-
-                    <button
-                        onclick="simpanFormPenarikan('Penarikan 1')"
-                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
-                        📥 Simpan Penarikan 1 (Download Excel)
-                    </button>
-
-                    <button
-                        onclick="simpanFormPenarikan('Penarikan 2')"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
-                        📥 Simpan Penarikan 2 (Download Excel)
-                    </button>
-
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-
-            <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-sm tracking-wide">
-                    PENGAJUAN PENARIKAN BARANG
-                </h3>
-
-                <span
-                    id="excelInfoStatus"
-                    class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">
-                    Pilih gudang terlebih dahulu
-                </span>
-            </div>
-
-            <div class="overflow-x-auto max-h-[500px]">
-
-                <table class="w-full text-left border-collapse text-xs">
-
-                    <thead class="sticky top-0 z-10">
-
-                        <tr class="bg-slate-200 text-slate-700 uppercase border-b">
-
-                            <th rowspan="2" class="p-2 border-r text-center bg-slate-200">No</th>
-
-                            <th rowspan="2" class="p-2 border-r bg-slate-200">
-                                Deskripsi Barang
-                            </th>
-
-                            <th rowspan="2" class="p-2 border-r text-center bg-blue-100">
-                                Total Stok Asal
-                            </th>
-
-                            <th colspan="2" class="p-2 border-r text-center bg-amber-100">
-                                Jumlah Ingin Ditarik
-                            </th>
-
-                            <th rowspan="2" class="p-2 border-r text-center bg-emerald-100">
-                                Total Stok Tujuan
-                            </th>
-
-                            <th rowspan="2" class="p-2 border-r bg-slate-200">
-                                Keterangan
-                            </th>
-
-                            <th colspan="2" class="p-2 text-center bg-yellow-200">
-                                Stok Setelah Diajukan
-                            </th>
-
-                        </tr>
-
-                        <tr class="bg-slate-100 text-slate-700 text-center border-b font-semibold">
-
-                            <th class="p-1.5 border-r bg-slate-100">Diajukan</th>
-                            <th class="p-1.5 border-r bg-slate-100">Disetujui</th>
-
-                            <th class="p-1.5 border-r bg-yellow-100">
-                                Stok Asal
-                            </th>
-
-                            <th class="p-1.5 bg-yellow-100">
-                                Stok Tujuan
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="excelTableBody" class="divide-y divide-slate-200">
-                        <tr>
-                            <td colspan="9" class="p-8 text-center text-slate-400">
-                                Silakan centang Gudang Asal dan Gudang Tujuan.
-                            </td>
-                        </tr>
-                    </tbody>
-
-                </table>
-
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-
-            <h3 class="text-md font-bold text-slate-700 border-b pb-2 mb-4">
-                📋 Riwayat & Log Pengajuan Penarikan
-            </h3>
-
-            <div class="overflow-x-auto">
-
-                <table class="w-full text-left border-collapse text-xs">
-
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-600 uppercase">
-                            <th class="p-2 border-b">No</th>
-                            <th class="p-2 border-b">Jenis</th>
-                            <th class="p-2 border-b">Gudang Asal</th>
-                            <th class="p-2 border-b">Gudang Tujuan</th>
-                            <th class="p-2 border-b">Deskripsi Barang</th>
-                            <th class="p-2 border-b text-center">Diajukan</th>
-                            <th class="p-2 border-b text-center">Disetujui</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="rekapTableBody" class="divide-y divide-slate-100">
-                        <tr>
-                            <td colspan="7" class="p-4 text-center text-slate-400">
-                                Belum ada riwayat.
-                            </td>
-                        </tr>
-                    </tbody>
-
-                </table>
-            </div>
-        </div>
-
-    </section>
-
-</main>
-
 <script>
 /* ============================================================
    DATA GLOBAL
@@ -378,13 +10,7 @@ let transactionLogs = [];
 let stateDeductions = {};
 
 const EXCLUDED_COLUMNS = [
-    "NOTE",
-    "NOTES",
-    "CATATAN",
-    "TOTAL",
-    "JUMLAH",
-    "GRAND TOTAL",
-    "PRDCT"
+    "NOTE", "NOTES", "CATATAN", "TOTAL", "JUMLAH", "GRAND TOTAL", "PRDCT"
 ];
 
 
@@ -393,31 +19,20 @@ const EXCLUDED_COLUMNS = [
 ============================================================ */
 
 function normalizeText(value) {
-    return String(value ?? "")
-        .trim()
-        .replace(/\s+/g, " ")
-        .toUpperCase();
+    return String(value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
 }
 
 function normalizeHeader(value) {
-    return normalizeText(value)
-        .replace(/[_\-./]+/g, " ")
-        .trim();
+    return normalizeText(value).replace(/[_\-./]+/g, " ").trim();
 }
 
 function parseExcelNumber(value) {
-    if (value === null || value === undefined || value === "") {
-        return 0;
-    }
-    if (typeof value === "number") {
-        return Number.isFinite(value) ? value : 0;
-    }
+    if (value === null || value === undefined || value === "") return 0;
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
     let str = String(value).trim();
     if (!str) return 0;
     str = str.replace(/\s/g, "");
-    if (/^\(.*\)$/.test(str)) {
-        str = "-" + str.slice(1, -1);
-    }
+    if (/^\(.*\)$/.test(str)) str = "-" + str.slice(1, -1);
     if (str.includes(".") && str.includes(",")) {
         if (str.lastIndexOf(",") > str.lastIndexOf(".")) {
             str = str.replace(/\./g, "").replace(",", ".");
@@ -491,7 +106,7 @@ function switchTab(tab) {
 
 function loadDefaultData() {
     loadSampleData();
-    showUploadStatus("Data contoh berhasil dimuat. Anda sekarang dapat mengunggah file Excel.", "success");
+    showUploadStatus("Data contoh berhasil dimuat.", "success");
 }
 
 function loadSampleData() {
@@ -505,11 +120,6 @@ function loadSampleData() {
             category: "FIBER Kabel",
             desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2",
             qtys: { SUNTR: 9, CURUG: 2, SBY: 45, M2M: 2, SEMARANG: 0 }
-        },
-        {
-            category: "FIBER Kabel",
-            desc: "FO CABLE eHOSE AIRBLOWN 12 CORE",
-            qtys: { SUNTR: 0, CURUG: 0, SBY: 0, M2M: 0, SEMARANG: 0 }
         }
     ];
 
@@ -571,12 +181,8 @@ function escapeHtml(value) {
 ============================================================ */
 
 function getStatusInfo(qty) {
-    if (qty === 0) {
-        return { text: "Kosong (0)", class: "bg-red-100 text-red-700" };
-    }
-    if (qty >= 1 && qty <= 5) {
-        return { text: "Menipis (" + qty + ")", class: "bg-amber-100 text-amber-700" };
-    }
+    if (qty === 0) return { text: "Kosong (0)", class: "bg-red-100 text-red-700" };
+    if (qty >= 1 && qty <= 5) return { text: "Menipis (" + qty + ")", class: "bg-amber-100 text-amber-700" };
     return { text: "Aman (" + qty + ")", class: "bg-emerald-100 text-emerald-700" };
 }
 
@@ -615,8 +221,8 @@ function renderStokTable() {
 
         let matchStatus = true;
         if (filterStatus === "0") matchStatus = r.qty === 0;
-        if (filterStatus === "menipis") matchStatus = r.qty >= 1 && r.qty <= 5;
-        if (filterStatus === "aman") matchStatus = r.qty > 5;
+        else if (filterStatus === "menipis") matchStatus = r.qty >= 1 && r.qty <= 5;
+        else if (filterStatus === "aman") matchStatus = r.qty > 5;
 
         return matchSku && matchKat && matchGudang && matchStatus;
     });
@@ -681,7 +287,7 @@ function initPenarikanCheckboxes() {
 
 
 /* ============================================================
-   FORM PENARIKAN
+   FORM PENARIKAN (DENGAN AUTO-SYNC JUMLAH DISETUJUI)
 ============================================================ */
 
 function loadFormPenarikan() {
@@ -717,7 +323,6 @@ function loadFormPenarikan() {
                 totalStokTujuan += getEffectiveQty(index, tujuanW);
             });
 
-            // Sesuai permintaan: Jika stok asal DAN tujuan sama-sama 0, jangan tampilkan
             if (totalStokAsal === 0 && totalStokTujuan === 0) return;
 
             let matchFilter = true;
@@ -726,7 +331,6 @@ function loadFormPenarikan() {
             if (filterStokTujuan === "gt50" && totalStokTujuan <= 50) matchFilter = false;
 
             if (!matchFilter) return;
-
             rowCount++;
 
             tbody.innerHTML += `
@@ -740,7 +344,7 @@ function loadFormPenarikan() {
                         ${totalStokAsal}
                     </td>
                     <td class="p-2 border-r text-center">
-                        <input type="number" min="0" value="0" class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
+                        <input type="number" min="0" value="0" class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold" oninput="syncAndCalculate(this, ${totalStokAsal}, ${totalStokTujuan})">
                     </td>
                     <td class="p-2 border-r text-center">
                         <input type="number" min="0" value="0" class="input-disetujui border rounded px-1.5 py-1 text-xs w-20 text-center font-bold" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
@@ -760,19 +364,39 @@ function loadFormPenarikan() {
                 </tr>
             `;
 
-            if (rowCount >= 1000) return;
+            if (rowCount >= 500) return;
         });
 
         if (rowCount === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai filter.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai kategori & filter stok tujuan tersebut.</td></tr>`;
         }
     }, 20);
 }
 
 
 /* ============================================================
-   KALKULASI
+   KALKULASI & AUTO-SYNC DIAJUKAN KE DISETUJUI
 ============================================================ */
+
+function syncAndCalculate(inputElem, stokAsalMax, stokTujuanAwal) {
+    const row = inputElem.closest("tr");
+    const diajukanInput = row.querySelector(".input-diajukan");
+    const disetujuiInput = row.querySelector(".input-disetujui");
+
+    let diajukan = Math.max(0, parseInt(diajukanInput.value) || 0);
+
+    if (diajukan > stokAsalMax) {
+        diajukan = stokAsalMax;
+        diajukanInput.value = diajukan;
+    }
+
+    // Jika Jumlah Disetujui masih 0 atau kosong, otomatis sinkronkan dengan Jumlah Diajukan agar langsung terhitung
+    if (parseInt(disetujuiInput.value) === 0 || disetujuiInput.value === "") {
+        disetujuiInput.value = diajukan;
+    }
+
+    hitungKalkulasiExcel(disetujuiInput, stokAsalMax, stokTujuanAwal);
+}
 
 function hitungKalkulasiExcel(inputElem, stokAsalMax, stokTujuanAwal) {
     const row = inputElem.closest("tr");
@@ -819,7 +443,6 @@ function simpanFormPenarikan(jenisPenarikan) {
     let count = 0;
     const excelExportData = [];
 
-    // Format layout Excel persis seperti gambar referensi Anda
     excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
     excelExportData.push([`Jenis: ${jenisPenarikan}`]);
     excelExportData.push([`Asal: ${selectedAsal.join(", ")}`, "", `Tujuan: ${selectedTujuan.join(", ")}`]);
@@ -851,7 +474,7 @@ function simpanFormPenarikan(jenisPenarikan) {
             if (avail > 0) {
                 const take = Math.min(sisaToDeduct, avail);
                 stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
-                stateDeductions[itemIdx][asalW] = ded - take; // Simpan minus
+                stateDeductions[itemIdx][asalW] = ded - take;
                 sisaToDeduct -= take;
             }
         });
@@ -865,7 +488,7 @@ function simpanFormPenarikan(jenisPenarikan) {
 
             stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
             const curAdd = Number(stateDeductions[itemIdx][tujuanW] || 0);
-            stateDeductions[itemIdx][tujuanW] = curAdd + addShare; // Simpan plus
+            stateDeductions[itemIdx][tujuanW] = curAdd + addShare;
 
             sisaToAdd -= addShare;
         });
@@ -1171,19 +794,6 @@ function detectWarehouseColumns(headers, descColIdx, katColIdx) {
 
     return { warehouses: warehousesFound, indices: indices };
 }
-
-
-/* ============================================================
-   EVENT FILTER STOK
-============================================================ */
-
-["filterSku", "filterKategori", "filterGudang", "filterStatus"].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener("change", renderStokTable);
-});
-
-document.getElementById("filterSku").addEventListener("input", renderStokTable);
 
 
 /* ============================================================
