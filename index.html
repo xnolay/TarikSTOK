@@ -19,7 +19,7 @@
             <div class="mt-4 md:mt-0 flex items-center space-x-3">
                 <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm cursor-pointer transition shadow flex items-center space-x-2">
                     <span>📊 Upload File Excel Stok (.xls/.xlsx)</span>
-                    <input type="file" id="excelUpload" accept=".xls, .xlsx" class="hidden">
+                    <input type="file" id="excelUpload" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
                 </label>
                 <button onclick="loadDefaultData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
                     🔄 Muat Data Contoh
@@ -471,7 +471,7 @@
             sisaTujuanRes.innerText = sisaTujuan;
         }
 
-        // --- SIMPAN PENARIKAN & DOWNLOAD EXCEL TERTATA RAPI (SAMA PERSIS DENGAN GAMBAR REFERENSI) ---
+        // --- SIMPAN PENARIKAN & DOWNLOAD EXCEL (TERTATA RAPI SESUAI REFERENSI) ---
         function simpanFormPenarikan(jenisPenarikan) {
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
@@ -485,7 +485,7 @@
             let count = 0;
             let excelExportData = [];
 
-            // Header persis seperti gambar referensi
+            // Header laporan persis seperti gambar referensi
             excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
             excelExportData.push([`Jenis: ${jenisPenarikan}`]);
             excelExportData.push([`Asal: ${selectedAsal.join(', ')}`, "", `Tujuan: ${selectedTujuan.join(', ')}`]);
@@ -501,7 +501,7 @@
                 if (disetujui > 0 || diajukan > 0) {
                     const item = masterStockData[itemIdx];
 
-                    // 1. Kurangi stok di gudang asal secara proporsional secara permanen
+                    // 1. Kurangi stok di gudang asal secara permanen
                     let sisaToDeduct = disetujui;
                     selectedAsal.forEach(asalW => {
                         if (sisaToDeduct <= 0) return;
@@ -512,12 +512,12 @@
                         if (avail > 0) {
                             let take = Math.min(sisaToDeduct, avail);
                             stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
-                            stateDeductions[itemIdx][asalW] = ded - take; // Akumulasi pengurangan
+                            stateDeductions[itemIdx][asalW] = ded - take; 
                             sisaToDeduct -= take;
                         }
                     });
 
-                    // 2. Tambahkan stok ke gudang tujuan secara permanen
+                    // 2. Tambah stok ke gudang tujuan secara permanen
                     let sisaToAdd = disetujui;
                     selectedTujuan.forEach((tujuanW, tIdx) => {
                         if (sisaToAdd <= 0) return;
@@ -525,7 +525,7 @@
                         
                         stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
                         let curAdd = stateDeductions[itemIdx][tujuanW] || 0;
-                        stateDeductions[itemIdx][tujuanW] = curAdd + addShare; // Akumulasi penambahan ke tujuan
+                        stateDeductions[itemIdx][tujuanW] = curAdd + addShare; 
                         sisaToAdd -= addShare;
                     });
 
@@ -571,7 +571,7 @@
             let fileName = `Pengajuan_${jenisPenarikan.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(workbook, fileName);
 
-            alert(`${jenisPenarikan} berhasil disimpan! Stok tujuan telah bertambah permanen, dan file Excel laporan berhasil di-download.`);
+            alert(`${jenisPenarikan} berhasil disimpan! Stok tujuan bertambah permanen, dan file Excel berhasil di-download.`);
             loadFormPenarikan(); 
         }
 
@@ -650,7 +650,7 @@
 
                     warehouses = detectedWarehouses;
                     masterStockData = [];
-                    stateDeductions = {}; // Reset akumulasi stok saat upload file baru
+                    stateDeductions = {}; 
 
                     let currentCategory = "UMUM";
                     for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
