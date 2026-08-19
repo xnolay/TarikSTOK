@@ -599,7 +599,7 @@
             });
         }
 
-        // --- PARSER EXCEL ANDA YANG SUDAH BERHASIL (TIDAK DIUBAH) ---
+       // --- PARSER EXCEL OTOMATIS ---
         document.getElementById('excelUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -609,17 +609,11 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    if (!jsonRows || jsonRows.length === 0) {
-                        alert("File Excel kosong atau tidak terbaca.");
-                        return;
-                    }
-
                     let headerRowIdx = 0;
                     const headers = jsonRows[headerRowIdx] || [];
                     
@@ -636,21 +630,15 @@
                     headers.forEach((h, idx) => {
                         if (h && idx > 1 && idx !== katColIdx) {
                             let wName = String(h).trim();
-                            if (wName && wName !== "undefined" && wName !== "NOTE" && wName !== "PRDCT") {
+                            if (wName && wName !== "undefined") {
                                 detectedWarehouses.push(wName);
                                 whIndices[wName] = idx;
                             }
                         }
                     });
 
-                    if (detectedWarehouses.length === 0) {
-                        detectedWarehouses = ["SUNTR", "M2M", "CURUG", "SBY", "SEMARANG"];
-                        detectedWarehouses.forEach((w, i) => whIndices[w] = 2 + i);
-                    }
-
                     warehouses = detectedWarehouses;
                     masterStockData = [];
-                    stateDeductions = {}; 
 
                     let currentCategory = "UMUM";
                     for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
@@ -661,10 +649,7 @@
                         if (!desc || desc.toLowerCase().includes("total") || desc.toLowerCase().includes("cetak di")) continue;
 
                         if (katColIdx !== -1 && row[katColIdx]) {
-                            let katVal = String(row[katColIdx]).trim();
-                            if (katVal && katVal !== "0" && katVal !== "KATAGORI" && katVal !== "KATEGORI") {
-                                currentCategory = katVal;
-                            }
+                            currentCategory = String(row[katColIdx]).trim();
                         }
 
                         let qtys = {};
@@ -684,7 +669,7 @@
                     categories = [...new Set(masterStockData.map(item => item.category))];
                     initDropdowns();
                     renderStokTable();
-                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang dari ${warehouses.length} gudang.`);
+                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang.`);
                 } catch (err) {
                     console.error("Gagal membaca Excel:", err);
                     alert("Terjadi kesalahan saat membaca file Excel.");
