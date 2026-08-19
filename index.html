@@ -4,683 +4,2167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PT. Glori Mitra Sukses - Manajemen Stok & Penarikan</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+    </style>
 </head>
+
 <body class="bg-slate-50 text-slate-800 font-sans">
 
-    <!-- Header -->
-    <header class="bg-blue-900 text-white shadow-md">
-        <div class="container mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold">PT. GLORI MITRA SUKSES</h1>
-                <p class="text-xs text-blue-200">Sistem Manajemen Stok & Penarikan Barang (Update Per Tgl. 18 Aug 2026)</p>
+<header class="bg-blue-900 text-white shadow-md">
+    <div class="container mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-xl font-bold">PT. GLORI MITRA SUKSES</h1>
+            <p class="text-xs text-blue-200">
+                Sistem Manajemen Stok & Penarikan Barang
+                <span id="tanggalUpdate"></span>
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-2">
+            <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded cursor-pointer transition shadow flex items-center gap-2 text-sm">
+                <span>📊 Upload Excel Stok (.xls / .xlsx)</span>
+                <input
+                    type="file"
+                    id="excelUpload"
+                    accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    class="hidden"
+                >
+            </label>
+
+            <button
+                onclick="loadDefaultData()"
+                class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
+                🔄 Muat Data Contoh
+            </button>
+        </div>
+    </div>
+</header>
+
+<nav class="bg-white shadow border-b">
+    <div class="container mx-auto px-6 flex space-x-6">
+        <button
+            onclick="switchTab('stok')"
+            id="tab-stok"
+            class="py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600">
+            📦 Menu Stok
+        </button>
+
+        <button
+            onclick="switchTab('penarikan')"
+            id="tab-penarikan"
+            class="py-3 px-4 font-semibold text-slate-500">
+            📊 Visualisasi Penarikan Barang
+        </button>
+    </div>
+</nav>
+
+<main class="container mx-auto px-6 py-8">
+
+    <!-- STATUS EXCEL -->
+    <div id="uploadStatus" class="mb-6 hidden rounded-lg border px-4 py-3 text-sm"></div>
+
+    <!-- TAB STOK -->
+    <section id="section-stok" class="space-y-6">
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-700">
+                        Filter Data Stok
+                        (Total Item: <span id="totalItemCount">0</span>)
+                    </h2>
+
+                    <p id="excelFileInfo" class="text-xs text-slate-400 mt-1">
+                        Belum ada file Excel yang diunggah.
+                    </p>
+                </div>
             </div>
-            <div class="mt-4 md:mt-0 flex items-center space-x-3">
-                <label class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm cursor-pointer transition shadow flex items-center space-x-2">
-                    <span>📊 Upload File Excel Stok (.xls/.xlsx)</span>
-                    <input type="file" id="excelUpload" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
-                </label>
-                <button onclick="loadDefaultData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm transition shadow">
-                    🔄 Muat Data Contoh
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">
+                        Cari Deskripsi Barang
+                    </label>
+                    <input
+                        type="text"
+                        id="filterSku"
+                        placeholder="Contoh: AIRFACE, CABLE..."
+                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">
+                        Kategori Barang
+                    </label>
+                    <select
+                        id="filterKategori"
+                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Kategori</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">
+                        Pilih Gudang
+                    </label>
+                    <select
+                        id="filterGudang"
+                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Gudang</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">
+                        Status Stok
+                    </label>
+                    <select
+                        id="filterStatus"
+                        class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Status</option>
+                        <option value="0">Kosong (0)</option>
+                        <option value="menipis">Menipis (1 - 5)</option>
+                        <option value="aman">Aman (&gt; 5)</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="mt-4 flex justify-between items-center">
+                <span id="stokCountStatus" class="text-xs text-slate-500 font-medium">
+                    Belum ada data.
+                </span>
+
+                <button
+                    onclick="renderStokTable()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg text-sm transition shadow-sm">
+                    Terapkan Filter
                 </button>
             </div>
         </div>
-    </header>
 
-    <!-- Navigasi Menu -->
-    <nav class="bg-white shadow border-b">
-        <div class="container mx-auto px-6 flex space-x-6">
-            <button onclick="switchTab('stok')" id="tab-stok" class="py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none transition">
-                📦 Menu Stok
-            </button>
-            <button onclick="switchTab('penarikan')" id="tab-penarikan" class="py-3 px-4 font-semibold text-slate-500 hover:text-blue-600 focus:outline-none transition">
-                📊 Visualisasi Penarikan Barang
-            </button>
-        </div>
-    </nav>
-
-    <!-- Main Container -->
-    <main class="container mx-auto px-6 py-8">
-
-        <!-- TAB 1: MENU STOK -->
-        <section id="section-stok" class="space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-slate-700 mb-4">Filter Data Stok (Total Item: <span id="totalItemCount">0</span>)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Cari Deskripsi Barang</label>
-                        <input type="text" id="filterSku" placeholder="Contoh: AIRFACE, CABLE..." class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Barang</label>
-                        <select id="filterKategori" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">Semua Kategori</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Gudang</label>
-                        <select id="filterGudang" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">Semua Gudang</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Status Stok</label>
-                        <select id="filterStatus" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="">Semua Status</option>
-                            <option value="0">Kosong (0)</option>
-                            <option value="menipis">Menipis (1 - 5)</option>
-                            <option value="aman">Aman (&gt; 5)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="mt-4 flex justify-between items-center">
-                    <span id="stokCountStatus" class="text-xs text-slate-500 font-medium">Menampilkan data keseluruhan</span>
-                    <button onclick="renderStokTable()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg text-sm transition shadow-sm">
-                        Terapkan Filter
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tabel Stok -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto max-h-[600px]">
-                    <table class="w-full text-left border-collapse sticky top-0">
-                        <thead class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider sticky top-0 z-10">
-                            <tr>
-                                <th class="p-3 border-b bg-slate-100">Deskripsi Barang</th>
-                                <th class="p-3 border-b bg-slate-100">Kategori</th>
-                                <th class="p-3 border-b bg-slate-100">Gudang</th>
-                                <th class="p-3 border-b bg-slate-100 text-center">Qty</th>
-                                <th class="p-3 border-b bg-slate-100 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
-                            <tr>
-                                <td colspan="5" class="p-6 text-center text-slate-400">Silakan unggah file Excel stok lengkap Anda (`.xls`/`.xlsx`).</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 2: VISUALISASI PENARIKAN BARANG -->
-        <section id="section-penarikan" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Checkbox Gudang Asal -->
-                    <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Gudang Asal (Bisa Centang Banyak):</label>
-                        <div id="containerAsal" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 bg-white rounded border">
-                            <!-- Generated by JS -->
-                        </div>
-                    </div>
-                    <!-- Checkbox Gudang Tujuan -->
-                    <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Gudang Tujuan (Bisa Centang Banyak):</label>
-                        <div id="containerTujuan" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 bg-white rounded border">
-                            <!-- Generated by JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter Stok Tujuan & Tombol Eksekusi -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t items-center">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Stok Gudang Tujuan:</label>
-                        <select id="filterStokPenarikan" class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium">
-                            <option value="all">Semua Stok Tujuan</option>
-                            <option value="lt10">Stok Tujuan &lt; 10</option>
-                            <option value="lt50">Stok Tujuan &lt; 50</option>
-                            <option value="gt50">Stok Tujuan &gt; 50</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2 flex justify-end space-x-2 pt-2">
-                        <button onclick="loadFormPenarikan()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-xs transition shadow">
-                            🔍 Terapkan Pilihan & Filter
-                        </button>
-                        <button onclick="simpanFormPenarikan('Penarikan 1')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-xs transition shadow">
-                            📥 Simpan Penarikan 1 (Download Excel)
-                        </button>
-                        <button onclick="simpanFormPenarikan('Penarikan 2')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-xs transition shadow">
-                            📥 Simpan Penarikan 2 (Download Excel)
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabel Form Penarikan -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
-                    <h3 class="font-bold text-sm tracking-wide">PENGAJUAN PENARIKAN BARANG</h3>
-                    <span id="excelInfoStatus" class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">Centang gudang & klik "Terapkan Pilihan & Filter"</span>
-                </div>
-                <div class="overflow-x-auto max-h-[500px]">
-                    <table id="tabelPengajuanExcel" class="w-full text-left border-collapse text-xs">
-                        <thead class="sticky top-0 z-10">
-                            <tr class="bg-slate-200 text-slate-700 uppercase border-b">
-                                <th rowspan="2" class="p-2 border-r align-middle text-center w-12 bg-slate-200">No</th>
-                                <th rowspan="2" class="p-2 border-r align-middle bg-slate-200">Deskripsi Barang</th>
-                                <th rowspan="2" class="p-2 border-r align-middle text-center bg-blue-100">Total Stok Asal</th>
-                                <th colspan="2" class="p-2 border-r text-center bg-amber-100">Jumlah Ingin Ditarik</th>
-                                <th rowspan="2" class="p-2 border-r align-middle text-center bg-emerald-100">Total Stok Tujuan</th>
-                                <th rowspan="2" class="p-2 border-r align-middle bg-slate-200">Keterangan</th>
-                                <th colspan="2" class="p-2 text-center bg-yellow-200">Stok Setelah Diajukan</th>
-                            </tr>
-                            <tr class="bg-slate-100 text-slate-700 text-center border-b font-semibold">
-                                <th class="p-1.5 border-r w-24 bg-slate-100">Diajukan</th>
-                                <th class="p-1.5 border-r w-24 bg-slate-100">Disetujui</th>
-                                <th class="p-1.5 border-r w-24 bg-yellow-100">Stok Asal</th>
-                                <th class="p-1.5 w-24 bg-yellow-100">Stok Tujuan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="excelTableBody" class="divide-y divide-slate-200">
-                            <tr>
-                                <td colspan="9" class="p-8 text-center text-slate-400">Silakan centang Gudang Asal, Gudang Tujuan, lalu klik tombol "Terapkan Pilihan & Filter".</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <h3 class="text-md font-bold text-slate-700 border-b pb-2">📋 Riwayat & Log Pengajuan Penarikan</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 uppercase">
-                                <th class="p-2 border-b">No</th>
-                                <th class="p-2 border-b">Jenis</th>
-                                <th class="p-2 border-b">Gudang Asal</th>
-                                <th class="p-2 border-b">Gudang Tujuan</th>
-                                <th class="p-2 border-b">Deskripsi Barang</th>
-                                <th class="p-2 border-b text-center">Diajukan</th>
-                                <th class="p-2 border-b text-center">Disetujui</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rekapTableBody" class="divide-y divide-slate-100">
-                            <tr>
-                                <td colspan="7" class="p-4 text-center text-slate-400">Belum ada riwayat penarikan tersimpan.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <script>
-        let masterStockData = [];
-        let warehouses = [];
-        let categories = [];
-        let transactionLogs = [];
-        let stateDeductions = {}; 
-
-        function switchTab(tab) {
-            if (tab === 'stok') {
-                document.getElementById('section-stok').classList.remove('hidden');
-                document.getElementById('section-penarikan').classList.add('hidden');
-                document.getElementById('tab-stok').className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none transition";
-                document.getElementById('tab-penarikan').className = "py-3 px-4 font-semibold text-slate-500 hover:text-blue-600 focus:outline-none transition";
-            } else {
-                document.getElementById('section-stok').classList.add('hidden');
-                document.getElementById('section-penarikan').classList.remove('hidden');
-                document.getElementById('tab-penarikan').className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none transition";
-                document.getElementById('tab-stok').className = "py-3 px-4 font-semibold text-slate-500 hover:text-blue-600 focus:outline-none transition";
-                initPenarikanCheckboxes();
-                loadFormPenarikan(); 
-            }
-        }
-
-        function loadDefaultData() {
-            loadSampleData();
-        }
-
-        function loadSampleData() {
-            masterStockData = [
-                { category: "COUGAR", desc: "SIDE PANEL ACRYLIC FOR QBX 2MM", qtys: {"SUNTR": 12, "CURUG": 0, "SBY": 5, "M2M": 0, "SEMARANG": 2} },
-                { category: "FIBER Kabel", desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2", qtys: {"SUNTR": 9, "CURUG": 2, "SBY": 45, "M2M": 2, "SEMARANG": 0} },
-                { category: "FIBER Kabel", desc: "FO CABLE eHOSE AIRBLOWN 12 CORE", qtys: {"SUNTR": 0, "CURUG": 0, "SBY": 0, "M2M": 0, "SEMARANG": 0} }
-            ];
-            warehouses = ["SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC", "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI", "MALANG", "RMA", "SEMARANG", "PRDCT"];
-            categories = [...new Set(masterStockData.map(item => item.category))];
-            
-            initDropdowns();
-            renderStokTable();
-            alert("Data contoh stok berhasil dimuat!");
-        }
-
-        function initDropdowns() {
-            const gudangSelect = document.getElementById('filterGudang');
-            gudangSelect.innerHTML = '<option value="">Semua Gudang</option>';
-            warehouses.forEach(w => {
-                gudangSelect.innerHTML += `<option value="${w}">${w}</option>`;
-            });
-
-            const katSelect = document.getElementById('filterKategori');
-            katSelect.innerHTML = '<option value="">Semua Kategori</option>';
-            categories.forEach(k => {
-                katSelect.innerHTML += `<option value="${k}">${k}</option>`;
-            });
-
-            document.getElementById('totalItemCount').innerText = masterStockData.length;
-        }
-
-        function getStatusInfo(qty) {
-            if (qty === 0) return { text: "Kosong (0)", class: "bg-red-100 text-red-700" };
-            if (qty >= 1 && qty <= 5) return { text: "Menipis ("+qty+")", class: "bg-amber-100 text-amber-700" };
-            return { text: "Aman ("+qty+")", class: "bg-emerald-100 text-emerald-700" };
-        }
-
-        function renderStokTable() {
-            const tbody = document.getElementById('stokTableBody');
-            const countStatus = document.getElementById('stokCountStatus');
-            tbody.innerHTML = '';
-
-            const searchSku = document.getElementById('filterSku').value.toLowerCase();
-            const filterKat = document.getElementById('filterKategori').value;
-            const filterGudang = document.getElementById('filterGudang').value;
-            const filterStatus = document.getElementById('filterStatus').value;
-
-            let rows = [];
-            masterStockData.forEach((item, itemIdx) => {
-                warehouses.forEach(wh => {
-                    let base = item.qtys[wh] !== undefined ? item.qtys[wh] : 0;
-                    let ded = (stateDeductions[itemIdx] && stateDeductions[itemIdx][wh]) ? stateDeductions[itemIdx][wh] : 0;
-                    let qty = Math.max(0, base + ded);
-
-                    rows.push({ category: item.category, desc: item.desc, gudang: wh, qty: qty });
-                });
-            });
-
-            let filtered = rows.filter(r => {
-                const matchSku = r.desc.toLowerCase().includes(searchSku);
-                const matchKat = filterKat === "" || r.category === filterKat;
-                const matchGudang = filterGudang === "" || r.gudang === filterGudang;
-                
-                let matchStatus = true;
-                if (filterStatus === "0") matchStatus = (r.qty === 0);
-                else if (filterStatus === "menipis") matchStatus = (r.qty >= 1 && r.qty <= 5);
-                else if (filterStatus === "aman") matchStatus = (r.qty > 5);
-
-                return matchSku && matchKat && matchGudang && matchStatus;
-            });
-
-            countStatus.innerText = `Menampilkan ${filtered.length} baris data (dari total ${rows.length} baris)`;
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Tidak ada data stok yang sesuai filter.</td></tr>`;
-                return;
-            }
-
-            filtered.slice(0, 500).forEach(r => {
-                const status = getStatusInfo(r.qty);
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-medium text-slate-700">${r.desc}</td>
-                        <td class="p-3 text-slate-600 text-xs font-semibold">${r.category || '-'}</td>
-                        <td class="p-3 text-slate-600">${r.gudang}</td>
-                        <td class="p-3 text-center font-bold">${r.qty}</td>
-                        <td class="p-3 text-center">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${status.class}">${status.text}</span>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function initPenarikanCheckboxes() {
-            const containerAsal = document.getElementById('containerAsal');
-            const containerTujuan = document.getElementById('containerTujuan');
-            
-            let checkedAsalOld = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
-            let checkedTujuanOld = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
-
-            containerAsal.innerHTML = '';
-            containerTujuan.innerHTML = '';
-
-            warehouses.forEach((w, idx) => {
-                let isAsalChecked = checkedAsalOld.length > 0 ? checkedAsalOld.includes(w) : (idx === 0);
-                let isTujuanChecked = checkedTujuanOld.length > 0 ? checkedTujuanOld.includes(w) : (idx === 1);
-
-                containerAsal.innerHTML += `
-                    <label class="flex items-center space-x-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                        <input type="checkbox" value="${w}" class="chk-asal rounded text-blue-600 focus:ring-blue-500" ${isAsalChecked ? 'checked' : ''}>
-                        <span>${w}</span>
-                    </label>
-                `;
-                containerTujuan.innerHTML += `
-                    <label class="flex items-center space-x-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                        <input type="checkbox" value="${w}" class="chk-tujuan rounded text-emerald-600 focus:ring-emerald-500" ${isTujuanChecked ? 'checked' : ''}>
-                        <span>${w}</span>
-                    </label>
-                `;
-            });
-        }
-
-        function loadFormPenarikan() {
-            const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
-            const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
-            const filterStokTujuan = document.getElementById('filterStokPenarikan').value;
-            const activeCategory = document.getElementById('filterKategori').value; 
-            const tbody = document.getElementById('excelTableBody');
-            const infoStatus = document.getElementById('excelInfoStatus');
-
-            if (selectedAsal.length === 0 || selectedTujuan.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan.</td></tr>`;
-                return;
-            }
-
-            infoStatus.innerText = `Kategori: ${activeCategory || 'Semua'} | Asal: [${selectedAsal.join(', ')}] ➔ Tujuan: [${selectedTujuan.join(', ')}]`;
-            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang...</td></tr>`;
-
-            setTimeout(() => {
-                tbody.innerHTML = '';
-                let rowCount = 0;
-
-                masterStockData.forEach((item, index) => {
-                    if (activeCategory && item.category !== activeCategory) return;
-
-                    let totalStokAsal = 0;
-                    selectedAsal.forEach(asalW => {
-                        let base = item.qtys[asalW] || 0;
-                        let ded = (stateDeductions[index] && stateDeductions[index][asalW]) ? stateDeductions[index][asalW] : 0;
-                        totalStokAsal += Math.max(0, base + ded);
-                    });
-
-                    let totalStokTujuan = 0;
-                    selectedTujuan.forEach(tujuanW => {
-                        let base = item.qtys[tujuanW] || 0;
-                        let add = (stateDeductions[index] && stateDeductions[index][tujuanW]) ? stateDeductions[index][tujuanW] : 0;
-                        totalStokTujuan += Math.max(0, base + add);
-                    });
-
-                    // Aturan: Jika stok asal DAN tujuan sama-sama 0, jangan tampilkan
-                    if (totalStokAsal === 0 && totalStokTujuan === 0) return;
-
-                    let matchFilter = true;
-                    if (filterStokTujuan === 'lt10') {
-                        if (totalStokTujuan >= 10) matchFilter = false;
-                    } else if (filterStokTujuan === 'lt50') {
-                        if (totalStokTujuan >= 50) matchFilter = false;
-                    } else if (filterStokTujuan === 'gt50') {
-                        if (totalStokTujuan <= 50) matchFilter = false;
-                    }
-
-                    if (!matchFilter) return;
-                    rowCount++;
-
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50 excel-row" data-item-idx="${index}" data-asal='${JSON.stringify(selectedAsal)}' data-tujuan='${JSON.stringify(selectedTujuan)}'>
-                            <td class="p-2 border-r text-center font-medium">${rowCount}</td>
-                            <td class="p-2 border-r font-bold text-slate-800">
-                                ${item.desc}
-                                <div class="text-[10px] text-slate-500 font-normal">Kategori: ${item.category}</div>
-                            </td>
-                            <td class="p-2 border-r text-center font-bold text-blue-700 bg-blue-50 stok-asal-cell" data-base="${totalStokAsal}">${totalStokAsal}</td>
-                            <td class="p-2 border-r text-center">
-                                <input type="number" min="0" value="0" class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold outline-none focus:ring-1 focus:ring-blue-500" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
-                            </td>
-                            <td class="p-2 border-r text-center">
-                                <input type="number" min="0" value="0" class="input-disetujui border rounded px-1.5 py-1 text-xs w-20 text-center font-bold outline-none focus:ring-1 focus:ring-indigo-500" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
-                            </td>
-                            <td class="p-2 border-r text-center font-bold text-emerald-700 bg-emerald-50 stok-tujuan-cell">${totalStokTujuan}</td>
-                            <td class="p-2 border-r">
-                                <input type="text" placeholder="Keterangan..." class="input-ket border rounded px-2 py-1 text-xs w-full outline-none">
-                            </td>
-                            <td class="p-2 border-r text-center font-bold text-red-600 sisa-asal-res">${totalStokAsal}</td>
-                            <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">${totalStokTujuan}</td>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto max-h-[600px]">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider sticky top-0 z-10">
+                        <tr>
+                            <th class="p-3 border-b bg-slate-100">Deskripsi Barang</th>
+                            <th class="p-3 border-b bg-slate-100">Kategori</th>
+                            <th class="p-3 border-b bg-slate-100">Gudang</th>
+                            <th class="p-3 border-b bg-slate-100 text-center">Qty</th>
+                            <th class="p-3 border-b bg-slate-100 text-center">Status</th>
                         </tr>
-                    `;
+                    </thead>
 
-                    if (rowCount >= 500) break; 
-                });
+                    <tbody id="stokTableBody" class="text-sm divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="5" class="p-6 text-center text-slate-400">
+                                Silakan unggah file Excel stok Anda.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                if (rowCount === 0) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai kategori & filter stok tujuan tersebut.</td></tr>`;
-                }
-            }, 30);
+    </section>
+
+    <!-- TAB PENARIKAN -->
+    <section id="section-penarikan" class="hidden space-y-6">
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Pilih Gudang Asal
+                    </label>
+
+                    <div id="containerAsal"
+                         class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 bg-white rounded border">
+                    </div>
+                </div>
+
+                <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Pilih Gudang Tujuan
+                    </label>
+
+                    <div id="containerTujuan"
+                         class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 bg-white rounded border">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t items-center">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">
+                        Filter Stok Gudang Tujuan
+                    </label>
+
+                    <select
+                        id="filterStokPenarikan"
+                        class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium">
+                        <option value="all">Semua Stok Tujuan</option>
+                        <option value="lt10">Stok Tujuan &lt; 10</option>
+                        <option value="lt50">Stok Tujuan &lt; 50</option>
+                        <option value="gt50">Stok Tujuan &gt; 50</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2 flex flex-wrap justify-end gap-2 pt-2">
+
+                    <button
+                        onclick="loadFormPenarikan()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
+                        🔍 Terapkan Pilihan & Filter
+                    </button>
+
+                    <button
+                        onclick="simpanFormPenarikan('Penarikan 1')"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
+                        📥 Simpan Penarikan 1
+                    </button>
+
+                    <button
+                        onclick="simpanFormPenarikan('Penarikan 2')"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
+                        📥 Simpan Penarikan 2
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+
+            <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm tracking-wide">
+                    PENGAJUAN PENARIKAN BARANG
+                </h3>
+
+                <span
+                    id="excelInfoStatus"
+                    class="text-xs bg-blue-800 px-3 py-1 rounded font-medium">
+                    Pilih gudang terlebih dahulu
+                </span>
+            </div>
+
+            <div class="overflow-x-auto max-h-[500px]">
+
+                <table class="w-full text-left border-collapse text-xs">
+
+                    <thead class="sticky top-0 z-10">
+
+                        <tr class="bg-slate-200 text-slate-700 uppercase border-b">
+
+                            <th rowspan="2" class="p-2 border-r text-center bg-slate-200">No</th>
+
+                            <th rowspan="2" class="p-2 border-r bg-slate-200">
+                                Deskripsi Barang
+                            </th>
+
+                            <th rowspan="2" class="p-2 border-r text-center bg-blue-100">
+                                Total Stok Asal
+                            </th>
+
+                            <th colspan="2" class="p-2 border-r text-center bg-amber-100">
+                                Jumlah Ingin Ditarik
+                            </th>
+
+                            <th rowspan="2" class="p-2 border-r text-center bg-emerald-100">
+                                Total Stok Tujuan
+                            </th>
+
+                            <th rowspan="2" class="p-2 border-r bg-slate-200">
+                                Keterangan
+                            </th>
+
+                            <th colspan="2" class="p-2 text-center bg-yellow-200">
+                                Stok Setelah Diajukan
+                            </th>
+
+                        </tr>
+
+                        <tr class="bg-slate-100 text-slate-700 text-center border-b font-semibold">
+
+                            <th class="p-1.5 border-r bg-slate-100">Diajukan</th>
+                            <th class="p-1.5 border-r bg-slate-100">Disetujui</th>
+
+                            <th class="p-1.5 border-r bg-yellow-100">
+                                Stok Asal
+                            </th>
+
+                            <th class="p-1.5 bg-yellow-100">
+                                Stok Tujuan
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="excelTableBody" class="divide-y divide-slate-200">
+                        <tr>
+                            <td colspan="9" class="p-8 text-center text-slate-400">
+                                Silakan centang Gudang Asal dan Gudang Tujuan.
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+
+            <h3 class="text-md font-bold text-slate-700 border-b pb-2 mb-4">
+                📋 Riwayat & Log Pengajuan Penarikan
+            </h3>
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full text-left border-collapse text-xs">
+
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 uppercase">
+                            <th class="p-2 border-b">No</th>
+                            <th class="p-2 border-b">Jenis</th>
+                            <th class="p-2 border-b">Gudang Asal</th>
+                            <th class="p-2 border-b">Gudang Tujuan</th>
+                            <th class="p-2 border-b">Deskripsi Barang</th>
+                            <th class="p-2 border-b text-center">Diajukan</th>
+                            <th class="p-2 border-b text-center">Disetujui</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="rekapTableBody" class="divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="7" class="p-4 text-center text-slate-400">
+                                Belum ada riwayat.
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+
+    </section>
+
+</main>
+
+<script>
+/* ============================================================
+   DATA GLOBAL
+============================================================ */
+
+let masterStockData = [];
+let warehouses = [];
+let categories = [];
+let transactionLogs = [];
+let stateDeductions = {};
+
+const EXCLUDED_COLUMNS = [
+    "NOTE",
+    "NOTES",
+    "CATATAN",
+    "TOTAL",
+    "JUMLAH",
+    "GRAND TOTAL",
+    "PRDCT"
+];
+
+
+/* ============================================================
+   UTILITAS
+============================================================ */
+
+function normalizeText(value) {
+    return String(value ?? "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase();
+}
+
+function normalizeHeader(value) {
+    return normalizeText(value)
+        .replace(/[_\-./]+/g, " ")
+        .trim();
+}
+
+function parseExcelNumber(value) {
+
+    if (value === null || value === undefined || value === "") {
+        return 0;
+    }
+
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    let str = String(value).trim();
+
+    if (!str) return 0;
+
+    str = str.replace(/\s/g, "");
+
+    // (1.234) = -1234
+    if (/^\(.*\)$/.test(str)) {
+        str = "-" + str.slice(1, -1);
+    }
+
+    // Format Indonesia: 1.234,56
+    if (str.includes(".") && str.includes(",")) {
+        if (str.lastIndexOf(",") > str.lastIndexOf(".")) {
+            str = str.replace(/\./g, "").replace(",", ".");
+        } else {
+            str = str.replace(/,/g, "");
         }
+    }
+    // 1.234 biasanya angka ribuan
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(str)) {
+        str = str.replace(/\./g, "");
+    }
+    // 1,234 biasanya angka ribuan
+    else if (/^-?\d{1,3}(,\d{3})+$/.test(str)) {
+        str = str.replace(/,/g, "");
+    }
+    else {
+        str = str.replace(/,/g, ".");
+    }
 
-        function hitungKalkulasiExcel(inputElem, stokAsalMax, stokTujuanAwal) {
-            const row = inputElem.closest('tr');
-            const diajukanInput = row.querySelector('.input-diajukan');
-            const disetujuiInput = row.querySelector('.input-disetujui');
-            const sisaAsalRes = row.querySelector('.sisa-asal-res');
-            const sisaTujuanRes = row.querySelector('.sisa-tujuan-res');
+    const result = parseFloat(str);
 
-            let diajukan = parseInt(diajukanInput.value) || 0;
-            let disetujui = parseInt(disetujuiInput.value) || 0;
+    return Number.isFinite(result) ? result : 0;
+}
 
-            if (disetujui > diajukan) {
-                disetujui = diajukan;
-                disetujuiInput.value = disetujui;
+function showUploadStatus(message, type = "success") {
+
+    const box = document.getElementById("uploadStatus");
+
+    box.classList.remove(
+        "hidden",
+        "bg-emerald-50",
+        "text-emerald-700",
+        "border-emerald-200",
+        "bg-red-50",
+        "text-red-700",
+        "border-red-200",
+        "bg-amber-50",
+        "text-amber-700",
+        "border-amber-200"
+    );
+
+    if (type === "error") {
+        box.classList.add(
+            "bg-red-50",
+            "text-red-700",
+            "border-red-200"
+        );
+    } else if (type === "warning") {
+        box.classList.add(
+            "bg-amber-50",
+            "text-amber-700",
+            "border-amber-200"
+        );
+    } else {
+        box.classList.add(
+            "bg-emerald-50",
+            "text-emerald-700",
+            "border-emerald-200"
+        );
+    }
+
+    box.innerHTML = message;
+    box.classList.remove("hidden");
+}
+
+
+/* ============================================================
+   TAB
+============================================================ */
+
+function switchTab(tab) {
+
+    const stok = document.getElementById("section-stok");
+    const penarikan = document.getElementById("section-penarikan");
+
+    const tabStok = document.getElementById("tab-stok");
+    const tabPenarikan = document.getElementById("tab-penarikan");
+
+    if (tab === "stok") {
+
+        stok.classList.remove("hidden");
+        penarikan.classList.add("hidden");
+
+        tabStok.className =
+            "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600";
+
+        tabPenarikan.className =
+            "py-3 px-4 font-semibold text-slate-500";
+
+    } else {
+
+        stok.classList.add("hidden");
+        penarikan.classList.remove("hidden");
+
+        tabPenarikan.className =
+            "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600";
+
+        tabStok.className =
+            "py-3 px-4 font-semibold text-slate-500";
+
+        initPenarikanCheckboxes();
+        loadFormPenarikan();
+    }
+}
+
+
+/* ============================================================
+   DATA CONTOH
+============================================================ */
+
+function loadDefaultData() {
+
+    loadSampleData();
+
+    showUploadStatus(
+        "Data contoh berhasil dimuat. Anda sekarang dapat mengunggah file Excel.",
+        "success"
+    );
+}
+
+function loadSampleData() {
+
+    masterStockData = [
+        {
+            category: "COUGAR",
+            desc: "SIDE PANEL ACRYLIC FOR QBX 2MM",
+            qtys: {
+                SUNTR: 12,
+                CURUG: 0,
+                SBY: 5,
+                M2M: 0,
+                SEMARANG: 2
             }
-
-            if (diajukan > stokAsalMax) {
-                diajukan = stokAsalMax;
-                diajukanInput.value = diajukan;
+        },
+        {
+            category: "FIBER Kabel",
+            desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2",
+            qtys: {
+                SUNTR: 9,
+                CURUG: 2,
+                SBY: 45,
+                M2M: 2,
+                SEMARANG: 0
             }
-
-            let sisaAsal = stokAsalMax - disetujui;
-            let sisaTujuan = stokTujuanAwal + disetujui;
-
-            sisaAsalRes.innerText = sisaAsal;
-            sisaTujuanRes.innerText = sisaTujuan;
+        },
+        {
+            category: "FIBER Kabel",
+            desc: "FO CABLE eHOSE AIRBLOWN 12 CORE",
+            qtys: {
+                SUNTR: 0,
+                CURUG: 0,
+                SBY: 0,
+                M2M: 0,
+                SEMARANG: 0
+            }
         }
+    ];
 
-        // --- SIMPAN PENARIKAN & DOWNLOAD EXCEL (TERTATA RAPI SESUAI REFERENSI) ---
-        function simpanFormPenarikan(jenisPenarikan) {
-            const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
-            const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
+    warehouses = [
+        "SUNTR",
+        "M2M",
+        "CURUG",
+        "CIPUTAT",
+        "SBY",
+        "SBY-ITC",
+        "LBK",
+        "BALI",
+        "BALI 2",
+        "BDG",
+        "SERANG",
+        "KONSI",
+        "MALANG",
+        "RMA",
+        "SEMARANG",
+        "PRDCT"
+    ];
 
-            if (selectedAsal.length === 0 || selectedTujuan.length === 0) {
-                alert("Pilih minimal 1 Gudang Asal dan 1 Gudang Tujuan terlebih dahulu!");
-                return;
-            }
+    categories = [
+        ...new Set(masterStockData.map(item => item.category))
+    ];
 
-            const rows = document.querySelectorAll('.excel-row');
-            let count = 0;
-            let excelExportData = [];
+    stateDeductions = {};
+    transactionLogs = [];
 
-            // Header laporan persis seperti gambar referensi
-            excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
-            excelExportData.push([`Jenis: ${jenisPenarikan}`]);
-            excelExportData.push([`Asal: ${selectedAsal.join(', ')}`, "", `Tujuan: ${selectedTujuan.join(', ')}`]);
-            excelExportData.push([]); 
-            excelExportData.push(["No", "Deskripsi Barang", "Total Stok Asal", "Jumlah Diajukan", "Jumlah Disetujui", "Total Stok Tujuan", "Keterangan", "Sisa Stok Asal", "Sisa Stok Tujuan"]);
+    initDropdowns();
+    renderStokTable();
+    renderRekap();
+}
 
-            rows.forEach((row) => {
-                const itemIdx = row.getAttribute('data-item-idx');
-                const diajukan = parseInt(row.querySelector('.input-diajukan').value) || 0;
-                const disetujui = parseInt(row.querySelector('.input-disetujui').value) || 0;
-                const ket = row.querySelector('.input-ket').value;
 
-                if (disetujui > 0 || diajukan > 0) {
-                    const item = masterStockData[itemIdx];
+/* ============================================================
+   DROPDOWN
+============================================================ */
 
-                    // 1. Kurangi stok di gudang asal secara permanen
-                    let sisaToDeduct = disetujui;
-                    selectedAsal.forEach(asalW => {
-                        if (sisaToDeduct <= 0) return;
-                        let base = item.qtys[asalW] || 0;
-                        let ded = (stateDeductions[itemIdx] && stateDeductions[itemIdx][asalW]) ? stateDeductions[itemIdx][asalW] : 0;
-                        let avail = Math.max(0, base + ded);
+function initDropdowns() {
 
-                        if (avail > 0) {
-                            let take = Math.min(sisaToDeduct, avail);
-                            stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
-                            stateDeductions[itemIdx][asalW] = ded - take; 
-                            sisaToDeduct -= take;
-                        }
-                    });
+    const gudangSelect =
+        document.getElementById("filterGudang");
 
-                    // 2. Tambah stok ke gudang tujuan secara permanen
-                    let sisaToAdd = disetujui;
-                    selectedTujuan.forEach((tujuanW, tIdx) => {
-                        if (sisaToAdd <= 0) return;
-                        let addShare = Math.ceil(sisaToAdd / (selectedTujuan.length - tIdx));
-                        
-                        stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
-                        let curAdd = stateDeductions[itemIdx][tujuanW] || 0;
-                        stateDeductions[itemIdx][tujuanW] = curAdd + addShare; 
-                        sisaToAdd -= addShare;
-                    });
+    const katSelect =
+        document.getElementById("filterKategori");
 
-                    transactionLogs.push({
-                        type: jenisPenarikan,
-                        asal: selectedAsal.join(', '),
-                        tujuan: selectedTujuan.join(', '),
-                        desc: item.desc,
-                        diajukan: diajukan,
-                        disetujui: disetujui
-                    });
+    gudangSelect.innerHTML =
+        '<option value="">Semua Gudang</option>';
 
-                    let stokAsalSisa = row.querySelector('.sisa-asal-res').innerText;
-                    let stokTujuanSisa = row.querySelector('.sisa-tujuan-res').innerText;
+    warehouses.forEach(w => {
 
-                    excelExportData.push([
-                        count + 1,
-                        item.desc,
-                        row.querySelector('.stok-asal-cell').innerText,
-                        diajukan,
-                        disetujui,
-                        row.querySelector('.stok-tujuan-cell').innerText,
-                        ket,
-                        stokAsalSisa,
-                        stokTujuanSisa
-                    ]);
+        gudangSelect.innerHTML +=
+            `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`;
+    });
 
-                    count++;
-                }
+    katSelect.innerHTML =
+        '<option value="">Semua Kategori</option>';
+
+    categories.forEach(k => {
+
+        katSelect.innerHTML +=
+            `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`;
+    });
+
+    document.getElementById("totalItemCount").innerText =
+        masterStockData.length;
+}
+
+
+/* ============================================================
+   ESCAPE HTML
+============================================================ */
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* ============================================================
+   STOK
+============================================================ */
+
+function getStatusInfo(qty) {
+
+    if (qty === 0) {
+        return {
+            text: "Kosong (0)",
+            class: "bg-red-100 text-red-700"
+        };
+    }
+
+    if (qty >= 1 && qty <= 5) {
+        return {
+            text: "Menipis (" + qty + ")",
+            class: "bg-amber-100 text-amber-700"
+        };
+    }
+
+    return {
+        text: "Aman (" + qty + ")",
+        class: "bg-emerald-100 text-emerald-700"
+    };
+}
+
+function getEffectiveQty(itemIdx, warehouse) {
+
+    const base =
+        Number(masterStockData[itemIdx]?.qtys?.[warehouse] || 0);
+
+    const deduction =
+        Number(stateDeductions[itemIdx]?.[warehouse] || 0);
+
+    return Math.max(0, base + deduction);
+}
+
+function renderStokTable() {
+
+    const tbody =
+        document.getElementById("stokTableBody");
+
+    const countStatus =
+        document.getElementById("stokCountStatus");
+
+    tbody.innerHTML = "";
+
+    const searchSku =
+        document.getElementById("filterSku").value
+            .toLowerCase()
+            .trim();
+
+    const filterKat =
+        document.getElementById("filterKategori").value;
+
+    const filterGudang =
+        document.getElementById("filterGudang").value;
+
+    const filterStatus =
+        document.getElementById("filterStatus").value;
+
+    let rows = [];
+
+    masterStockData.forEach((item, itemIdx) => {
+
+        warehouses.forEach(wh => {
+
+            rows.push({
+                category: item.category,
+                desc: item.desc,
+                gudang: wh,
+                qty: getEffectiveQty(itemIdx, wh)
             });
 
-            if (count === 0) {
-                alert("Tidak ada barang yang diisi jumlah pengajuannya (diajukan/disetujui masih 0).");
-                return;
-            }
-
-            renderRekap();
-
-            const worksheet = XLSX.utils.aoa_to_sheet(excelExportData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Pengajuan Penarikan");
-            
-            let fileName = `Pengajuan_${jenisPenarikan.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-
-            alert(`${jenisPenarikan} berhasil disimpan! Stok tujuan bertambah permanen, dan file Excel berhasil di-download.`);
-            loadFormPenarikan(); 
-        }
-
-        function renderRekap() {
-            const tbody = document.getElementById('rekapTableBody');
-            tbody.innerHTML = '';
-
-            if (transactionLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada riwayat penarikan tersimpan.</td></tr>`;
-                return;
-            }
-
-            transactionLogs.forEach((log, index) => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-2 border-b font-medium">${index + 1}</td>
-                        <td class="p-2 border-b"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${log.type === 'Penarikan 1' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'}">${log.type}</span></td>
-                        <td class="p-2 border-b font-semibold text-slate-700">${log.asal}</td>
-                        <td class="p-2 border-b font-semibold text-blue-900">${log.tujuan}</td>
-                        <td class="p-2 border-b text-slate-600">${log.desc}</td>
-                        <td class="p-2 border-b text-center font-bold text-amber-600">${log.diajukan}</td>
-                        <td class="p-2 border-b text-center font-bold text-emerald-600">${log.disetujui}</td>
-                    </tr>
-                `;
-            });
-        }
-
-      // --- PARSER EXCEL OTOMATIS ---
-        document.getElementById('excelUpload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    
-                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    
-                    let headerRowIdx = 0;
-                    const headers = jsonRows[headerRowIdx] || [];
-                    
-                    let katColIdx = 1; 
-                    headers.forEach((h, idx) => {
-                        let hStr = String(h).trim().toUpperCase();
-                        if (hStr === "KATAGORI" || hStr === "KATEGORI") {
-                            katColIdx = idx;
-                        }
-                    });
-
-                    let detectedWarehouses = [];
-                    let whIndices = {};
-                    headers.forEach((h, idx) => {
-                        if (h && idx > 1 && idx !== katColIdx) {
-                            let wName = String(h).trim();
-                            if (wName && wName !== "undefined") {
-                                detectedWarehouses.push(wName);
-                                whIndices[wName] = idx;
-                            }
-                        }
-                    });
-
-                    warehouses = detectedWarehouses;
-                    masterStockData = [];
-
-                    let currentCategory = "UMUM";
-                    for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
-                        let row = jsonRows[i];
-                        if (!row || row.length === 0) continue;
-
-                        let desc = row[0] ? String(row[0]).trim() : "";
-                        if (!desc || desc.toLowerCase().includes("total") || desc.toLowerCase().includes("cetak di")) continue;
-
-                        if (katColIdx !== -1 && row[katColIdx]) {
-                            currentCategory = String(row[katColIdx]).trim();
-                        }
-
-                        let qtys = {};
-                        detectedWarehouses.forEach(w => {
-                            let colIdx = whIndices[w];
-                            let val = (colIdx !== undefined && row[colIdx] !== undefined) ? parseFloat(row[colIdx]) : 0;
-                            qtys[w] = isNaN(val) ? 0 : val;
-                        });
-
-                        masterStockData.push({
-                            category: currentCategory,
-                            desc: desc,
-                            qtys: qtys
-                        });
-                    }
-
-                    categories = [...new Set(masterStockData.map(item => item.category))];
-                    initDropdowns();
-                    renderStokTable();
-                    alert(`File Excel "${file.name}" berhasil diunggah!\nBerhasil memuat ${masterStockData.length} data barang.`);
-                } catch (err) {
-                    console.error("Gagal membaca Excel:", err);
-                    alert("Terjadi kesalahan saat membaca file Excel.");
-                }
-            };
-            reader.readAsArrayBuffer(file);
         });
 
-        window.onload = function() {
-            loadSampleData();
-        };
-    </script>
+    });
+
+    const filtered = rows.filter(r => {
+
+        const matchSku =
+            r.desc.toLowerCase().includes(searchSku);
+
+        const matchKat =
+            filterKat === "" || r.category === filterKat;
+
+        const matchGudang =
+            filterGudang === "" || r.gudang === filterGudang;
+
+        let matchStatus = true;
+
+        if (filterStatus === "0") {
+            matchStatus = r.qty === 0;
+        }
+
+        if (filterStatus === "menipis") {
+            matchStatus = r.qty >= 1 && r.qty <= 5;
+        }
+
+        if (filterStatus === "aman") {
+            matchStatus = r.qty > 5;
+        }
+
+        return matchSku &&
+               matchKat &&
+               matchGudang &&
+               matchStatus;
+    });
+
+    countStatus.innerText =
+        `Menampilkan ${filtered.length} baris data dari ${rows.length} baris.`;
+
+    if (filtered.length === 0) {
+
+        tbody.innerHTML =
+            `<tr>
+                <td colspan="5" class="p-6 text-center text-slate-400">
+                    Tidak ada data yang sesuai filter.
+                </td>
+            </tr>`;
+
+        return;
+    }
+
+    filtered.slice(0, 1000).forEach(r => {
+
+        const status =
+            getStatusInfo(r.qty);
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+                <td class="p-3 font-medium text-slate-700">
+                    ${escapeHtml(r.desc)}
+                </td>
+
+                <td class="p-3 text-slate-600 text-xs font-semibold">
+                    ${escapeHtml(r.category || "-")}
+                </td>
+
+                <td class="p-3 text-slate-600">
+                    ${escapeHtml(r.gudang)}
+                </td>
+
+                <td class="p-3 text-center font-bold">
+                    ${r.qty}
+                </td>
+
+                <td class="p-3 text-center">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${status.class}">
+                        ${status.text}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+
+/* ============================================================
+   PENARIKAN CHECKBOX
+============================================================ */
+
+function initPenarikanCheckboxes() {
+
+    const containerAsal =
+        document.getElementById("containerAsal");
+
+    const containerTujuan =
+        document.getElementById("containerTujuan");
+
+    const checkedAsalOld =
+        Array.from(
+            document.querySelectorAll(".chk-asal:checked")
+        ).map(cb => cb.value);
+
+    const checkedTujuanOld =
+        Array.from(
+            document.querySelectorAll(".chk-tujuan:checked")
+        ).map(cb => cb.value);
+
+    containerAsal.innerHTML = "";
+    containerTujuan.innerHTML = "";
+
+    warehouses.forEach((w, idx) => {
+
+        const asalChecked =
+            checkedAsalOld.length > 0
+                ? checkedAsalOld.includes(w)
+                : idx === 0;
+
+        const tujuanChecked =
+            checkedTujuanOld.length > 0
+                ? checkedTujuanOld.includes(w)
+                : idx === 1;
+
+        containerAsal.innerHTML += `
+            <label class="flex items-center gap-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
+                <input
+                    type="checkbox"
+                    value="${escapeHtml(w)}"
+                    class="chk-asal rounded text-blue-600"
+                    ${asalChecked ? "checked" : ""}>
+                <span>${escapeHtml(w)}</span>
+            </label>
+        `;
+
+        containerTujuan.innerHTML += `
+            <label class="flex items-center gap-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
+                <input
+                    type="checkbox"
+                    value="${escapeHtml(w)}"
+                    class="chk-tujuan rounded text-emerald-600"
+                    ${tujuanChecked ? "checked" : ""}>
+                <span>${escapeHtml(w)}</span>
+            </label>
+        `;
+    });
+}
+
+
+/* ============================================================
+   FORM PENARIKAN
+============================================================ */
+
+function loadFormPenarikan() {
+
+    const selectedAsal =
+        Array.from(
+            document.querySelectorAll(".chk-asal:checked")
+        ).map(cb => cb.value);
+
+    const selectedTujuan =
+        Array.from(
+            document.querySelectorAll(".chk-tujuan:checked")
+        ).map(cb => cb.value);
+
+    const filterStokTujuan =
+        document.getElementById("filterStokPenarikan").value;
+
+    const activeCategory =
+        document.getElementById("filterKategori").value;
+
+    const tbody =
+        document.getElementById("excelTableBody");
+
+    const infoStatus =
+        document.getElementById("excelInfoStatus");
+
+    if (
+        selectedAsal.length === 0 ||
+        selectedTujuan.length === 0
+    ) {
+
+        tbody.innerHTML =
+            `<tr>
+                <td colspan="9" class="p-6 text-center text-slate-400">
+                    Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan.
+                </td>
+            </tr>`;
+
+        return;
+    }
+
+    infoStatus.innerText =
+        `Kategori: ${activeCategory || "Semua"} | Asal: [${selectedAsal.join(", ")}] ➔ Tujuan: [${selectedTujuan.join(", ")}]`;
+
+    tbody.innerHTML =
+        `<tr>
+            <td colspan="9" class="p-6 text-center text-blue-600 font-semibold">
+                Memuat data barang...
+            </td>
+        </tr>`;
+
+    setTimeout(() => {
+
+        tbody.innerHTML = "";
+
+        let rowCount = 0;
+
+        masterStockData.forEach((item, index) => {
+
+            if (
+                activeCategory &&
+                item.category !== activeCategory
+            ) {
+                return;
+            }
+
+            let totalStokAsal = 0;
+
+            selectedAsal.forEach(asalW => {
+                totalStokAsal +=
+                    getEffectiveQty(index, asalW);
+            });
+
+            let totalStokTujuan = 0;
+
+            selectedTujuan.forEach(tujuanW => {
+                totalStokTujuan +=
+                    getEffectiveQty(index, tujuanW);
+            });
+
+            if (
+                totalStokAsal === 0 &&
+                totalStokTujuan === 0
+            ) {
+                return;
+            }
+
+            let matchFilter = true;
+
+            if (
+                filterStokTujuan === "lt10" &&
+                totalStokTujuan >= 10
+            ) {
+                matchFilter = false;
+            }
+
+            if (
+                filterStokTujuan === "lt50" &&
+                totalStokTujuan >= 50
+            ) {
+                matchFilter = false;
+            }
+
+            if (
+                filterStokTujuan === "gt50" &&
+                totalStokTujuan <= 50
+            ) {
+                matchFilter = false;
+            }
+
+            if (!matchFilter) return;
+
+            rowCount++;
+
+            tbody.innerHTML += `
+                <tr
+                    class="hover:bg-slate-50 excel-row"
+                    data-item-idx="${index}">
+
+                    <td class="p-2 border-r text-center font-medium">
+                        ${rowCount}
+                    </td>
+
+                    <td class="p-2 border-r font-bold text-slate-800">
+                        ${escapeHtml(item.desc)}
+                        <div class="text-[10px] text-slate-500 font-normal">
+                            Kategori: ${escapeHtml(item.category)}
+                        </div>
+                    </td>
+
+                    <td
+                        class="p-2 border-r text-center font-bold text-blue-700 bg-blue-50 stok-asal-cell"
+                        data-base="${totalStokAsal}">
+                        ${totalStokAsal}
+                    </td>
+
+                    <td class="p-2 border-r text-center">
+                        <input
+                            type="number"
+                            min="0"
+                            value="0"
+                            class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold"
+                            oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
+                    </td>
+
+                    <td class="p-2 border-r text-center">
+                        <input
+                            type="number"
+                            min="0"
+                            value="0"
+                            class="input-disetujui border rounded px-1.5 py-1 text-xs w-20 text-center font-bold"
+                            oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
+                    </td>
+
+                    <td
+                        class="p-2 border-r text-center font-bold text-emerald-700 bg-emerald-50 stok-tujuan-cell">
+                        ${totalStokTujuan}
+                    </td>
+
+                    <td class="p-2 border-r">
+                        <input
+                            type="text"
+                            placeholder="Keterangan..."
+                            class="input-ket border rounded px-2 py-1 text-xs w-full">
+                    </td>
+
+                    <td class="p-2 border-r text-center font-bold text-red-600 sisa-asal-res">
+                        ${totalStokAsal}
+                    </td>
+
+                    <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">
+                        ${totalStokTujuan}
+                    </td>
+
+                </tr>
+            `;
+
+            if (rowCount >= 1000) return;
+        });
+
+        if (rowCount === 0) {
+
+            tbody.innerHTML =
+                `<tr>
+                    <td colspan="9" class="p-6 text-center text-slate-400">
+                        Tidak ada barang yang sesuai filter.
+                    </td>
+                </tr>`;
+        }
+
+    }, 20);
+}
+
+
+/* ============================================================
+   KALKULASI
+============================================================ */
+
+function hitungKalkulasiExcel(
+    inputElem,
+    stokAsalMax,
+    stokTujuanAwal
+) {
+
+    const row =
+        inputElem.closest("tr");
+
+    const diajukanInput =
+        row.querySelector(".input-diajukan");
+
+    const disetujuiInput =
+        row.querySelector(".input-disetujui");
+
+    const sisaAsalRes =
+        row.querySelector(".sisa-asal-res");
+
+    const sisaTujuanRes =
+        row.querySelector(".sisa-tujuan-res");
+
+    let diajukan =
+        Math.max(
+            0,
+            parseInt(diajukanInput.value) || 0
+        );
+
+    let disetujui =
+        Math.max(
+            0,
+            parseInt(disetujuiInput.value) || 0
+        );
+
+    if (diajukan > stokAsalMax) {
+        diajukan = stokAsalMax;
+        diajukanInput.value = diajukan;
+    }
+
+    if (disetujui > diajukan) {
+        disetujui = diajukan;
+        disetujuiInput.value = disetujui;
+    }
+
+    const sisaAsal =
+        stokAsalMax - disetujui;
+
+    const sisaTujuan =
+        stokTujuanAwal + disetujui;
+
+    sisaAsalRes.innerText =
+        sisaAsal;
+
+    sisaTujuanRes.innerText =
+        sisaTujuan;
+}
+
+
+/* ============================================================
+   SIMPAN PENARIKAN
+============================================================ */
+
+function simpanFormPenarikan(jenisPenarikan) {
+
+    const selectedAsal =
+        Array.from(
+            document.querySelectorAll(".chk-asal:checked")
+        ).map(cb => cb.value);
+
+    const selectedTujuan =
+        Array.from(
+            document.querySelectorAll(".chk-tujuan:checked")
+        ).map(cb => cb.value);
+
+    if (
+        selectedAsal.length === 0 ||
+        selectedTujuan.length === 0
+    ) {
+
+        alert(
+            "Pilih minimal 1 Gudang Asal dan 1 Gudang Tujuan terlebih dahulu!"
+        );
+
+        return;
+    }
+
+    const rows =
+        document.querySelectorAll(".excel-row");
+
+    let count = 0;
+
+    const excelExportData = [];
+
+    excelExportData.push([
+        "PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"
+    ]);
+
+    excelExportData.push([
+        `Jenis: ${jenisPenarikan}`
+    ]);
+
+    excelExportData.push([
+        `Asal: ${selectedAsal.join(", ")}`,
+        "",
+        `Tujuan: ${selectedTujuan.join(", ")}`
+    ]);
+
+    excelExportData.push([]);
+
+    excelExportData.push([
+        "No",
+        "Deskripsi Barang",
+        "Total Stok Asal",
+        "Jumlah Diajukan",
+        "Jumlah Disetujui",
+        "Total Stok Tujuan",
+        "Keterangan",
+        "Sisa Stok Asal",
+        "Sisa Stok Tujuan"
+    ]);
+
+    rows.forEach(row => {
+
+        const itemIdx =
+            Number(row.getAttribute("data-item-idx"));
+
+        const diajukan =
+            Math.max(
+                0,
+                parseInt(
+                    row.querySelector(".input-diajukan").value
+                ) || 0
+            );
+
+        const disetujui =
+            Math.max(
+                0,
+                parseInt(
+                    row.querySelector(".input-disetujui").value
+                ) || 0
+            );
+
+        const ket =
+            row.querySelector(".input-ket").value;
+
+        if (
+            diajukan === 0 &&
+            disetujui === 0
+        ) {
+            return;
+        }
+
+        const item =
+            masterStockData[itemIdx];
+
+        let sisaToDeduct =
+            disetujui;
+
+        selectedAsal.forEach(asalW => {
+
+            if (sisaToDeduct <= 0) return;
+
+            const base =
+                Number(item.qtys[asalW] || 0);
+
+            const ded =
+                Number(
+                    stateDeductions[itemIdx]?.[asalW] || 0
+                );
+
+            const avail =
+                Math.max(0, base + ded);
+
+            if (avail > 0) {
+
+                const take =
+                    Math.min(
+                        sisaToDeduct,
+                        avail
+                    );
+
+                stateDeductions[itemIdx] =
+                    stateDeductions[itemIdx] || {};
+
+                stateDeductions[itemIdx][asalW] =
+                    ded - take;
+
+                sisaToDeduct -= take;
+            }
+        });
+
+        let sisaToAdd =
+            disetujui;
+
+        selectedTujuan.forEach(
+            (tujuanW, tIdx) => {
+
+                if (sisaToAdd <= 0) return;
+
+                const remainingWarehouses =
+                    selectedTujuan.length - tIdx;
+
+                const addShare =
+                    Math.ceil(
+                        sisaToAdd /
+                        remainingWarehouses
+                    );
+
+                stateDeductions[itemIdx] =
+                    stateDeductions[itemIdx] || {};
+
+                const curAdd =
+                    Number(
+                        stateDeductions[itemIdx][tujuanW] || 0
+                    );
+
+                stateDeductions[itemIdx][tujuanW] =
+                    curAdd + addShare;
+
+                sisaToAdd -= addShare;
+            }
+        );
+
+        transactionLogs.push({
+            type: jenisPenarikan,
+            asal: selectedAsal.join(", "),
+            tujuan: selectedTujuan.join(", "),
+            desc: item.desc,
+            diajukan,
+            disetujui
+        });
+
+        excelExportData.push([
+            count + 1,
+            item.desc,
+            row.querySelector(".stok-asal-cell").innerText,
+            diajukan,
+            disetujui,
+            row.querySelector(".stok-tujuan-cell").innerText,
+            ket,
+            row.querySelector(".sisa-asal-res").innerText,
+            row.querySelector(".sisa-tujuan-res").innerText
+        ]);
+
+        count++;
+    });
+
+    if (count === 0) {
+
+        alert(
+            "Tidak ada barang yang diisi jumlah pengajuannya."
+        );
+
+        return;
+    }
+
+    renderRekap();
+    renderStokTable();
+
+    if (
+        typeof XLSX === "undefined"
+    ) {
+
+        alert(
+            "Library Excel tidak berhasil dimuat. Periksa koneksi internet."
+        );
+
+        return;
+    }
+
+    const worksheet =
+        XLSX.utils.aoa_to_sheet(
+            excelExportData
+        );
+
+    const workbook =
+        XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Pengajuan Penarikan"
+    );
+
+    const tanggal =
+        new Date()
+            .toISOString()
+            .slice(0, 10);
+
+    const fileName =
+        `Pengajuan_${jenisPenarikan.replace(/\s+/g, "_")}_${tanggal}.xlsx`;
+
+    XLSX.writeFile(
+        workbook,
+        fileName
+    );
+
+    alert(
+        `${jenisPenarikan} berhasil disimpan dan file Excel berhasil di-download.`
+    );
+
+    loadFormPenarikan();
+}
+
+
+/* ============================================================
+   REKAP
+============================================================ */
+
+function renderRekap() {
+
+    const tbody =
+        document.getElementById("rekapTableBody");
+
+    tbody.innerHTML = "";
+
+    if (transactionLogs.length === 0) {
+
+        tbody.innerHTML =
+            `<tr>
+                <td colspan="7" class="p-4 text-center text-slate-400">
+                    Belum ada riwayat penarikan tersimpan.
+                </td>
+            </tr>`;
+
+        return;
+    }
+
+    transactionLogs.forEach(
+        (log, index) => {
+
+            tbody.innerHTML += `
+                <tr class="hover:bg-slate-50">
+
+                    <td class="p-2 border-b">
+                        ${index + 1}
+                    </td>
+
+                    <td class="p-2 border-b">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                            log.type === "Penarikan 1"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-indigo-100 text-indigo-800"
+                        }">
+                            ${escapeHtml(log.type)}
+                        </span>
+                    </td>
+
+                    <td class="p-2 border-b font-semibold">
+                        ${escapeHtml(log.asal)}
+                    </td>
+
+                    <td class="p-2 border-b font-semibold text-blue-900">
+                        ${escapeHtml(log.tujuan)}
+                    </td>
+
+                    <td class="p-2 border-b">
+                        ${escapeHtml(log.desc)}
+                    </td>
+
+                    <td class="p-2 border-b text-center font-bold">
+                        ${log.diajukan}
+                    </td>
+
+                    <td class="p-2 border-b text-center font-bold">
+                        ${log.disetujui}
+                    </td>
+
+                </tr>
+            `;
+        }
+    );
+}
+
+
+/* ============================================================
+   EXCEL IMPORT - VERSI DIPERBAIKI
+============================================================ */
+
+document
+    .getElementById("excelUpload")
+    .addEventListener("change", function(e) {
+
+        const file =
+            e.target.files?.[0];
+
+        if (!file) return;
+
+        importExcelFile(file);
+
+        // Supaya file yang sama dapat dipilih lagi
+        e.target.value = "";
+    });
+
+
+function importExcelFile(file) {
+
+    if (
+        typeof XLSX === "undefined"
+    ) {
+
+        showUploadStatus(
+            "❌ Library Excel (SheetJS/XLSX) belum berhasil dimuat. Pastikan komputer terhubung ke internet lalu refresh halaman.",
+            "error"
+        );
+
+        return;
+    }
+
+    const extension =
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+    if (
+        extension !== "xls" &&
+        extension !== "xlsx"
+    ) {
+
+        showUploadStatus(
+            "❌ File harus berformat .xls atau .xlsx.",
+            "error"
+        );
+
+        return;
+    }
+
+    showUploadStatus(
+        `⏳ Sedang membaca file <b>${escapeHtml(file.name)}</b>...`,
+        "warning"
+    );
+
+    const reader =
+        new FileReader();
+
+    reader.onerror = function() {
+
+        showUploadStatus(
+            "❌ Browser gagal membaca file tersebut.",
+            "error"
+        );
+    };
+
+    reader.onload = function(e) {
+
+        try {
+
+            const arrayBuffer =
+                e.target.result;
+
+            const data =
+                new Uint8Array(arrayBuffer);
+
+            const workbook =
+                XLSX.read(data, {
+                    type: "array",
+                    cellDates: false,
+                    cellNF: false,
+                    cellText: true
+                });
+
+            if (
+                !workbook.SheetNames ||
+                workbook.SheetNames.length === 0
+            ) {
+
+                throw new Error(
+                    "Workbook tidak mempunyai sheet."
+                );
+            }
+
+            const firstSheetName =
+                workbook.SheetNames[0];
+
+            const worksheet =
+                workbook.Sheets[firstSheetName];
+
+            if (!worksheet) {
+
+                throw new Error(
+                    "Sheet pertama tidak dapat dibaca."
+                );
+            }
+
+            /*
+             * header: 1 membuat data menjadi array 2 dimensi.
+             * Ini kompatibel dengan XLS dan XLSX.
+             */
+            const jsonRows =
+                XLSX.utils.sheet_to_json(
+                    worksheet,
+                    {
+                        header: 1,
+                        defval: "",
+                        raw: false,
+                        blankrows: false
+                    }
+                );
+
+            if (
+                !jsonRows ||
+                jsonRows.length === 0
+            ) {
+
+                throw new Error(
+                    "Sheet Excel kosong."
+                );
+            }
+
+            const headerInfo =
+                findExcelHeader(jsonRows);
+
+            if (!headerInfo) {
+
+                throw new Error(
+                    "Baris header tidak ditemukan. Pastikan file memiliki kolom Deskripsi Barang dan kolom Gudang."
+                );
+            }
+
+            const headerRowIdx =
+                headerInfo.rowIndex;
+
+            const headers =
+                headerInfo.headers;
+
+            const descColIdx =
+                headerInfo.descColIdx;
+
+            const katColIdx =
+                headerInfo.katColIdx;
+
+            /*
+             * Deteksi kolom gudang.
+             */
+            const detected =
+                detectWarehouseColumns(
+                    headers,
+                    descColIdx,
+                    katColIdx
+                );
+
+            let detectedWarehouses =
+                detected.warehouses;
+
+            let whIndices =
+                detected.indices;
+
+            /*
+             * Jika tidak menemukan gudang dari header,
+             * coba membaca pola kolom setelah deskripsi.
+             */
+            if (
+                detectedWarehouses.length === 0
+            ) {
+
+                for (
+                    let idx = 0;
+                    idx < headers.length;
+                    idx++
+                ) {
+
+                    if (
+                        idx === descColIdx ||
+                        idx === katColIdx
+                    ) {
+                        continue;
+                    }
+
+                    const name =
+                        normalizeHeader(
+                            headers[idx]
+                        );
+
+                    if (
+                        name &&
+                        !EXCLUDED_COLUMNS.includes(name)
+                    ) {
+
+                        detectedWarehouses.push(
+                            String(headers[idx]).trim()
+                        );
+
+                        whIndices[
+                            String(headers[idx]).trim()
+                        ] = idx;
+                    }
+                }
+            }
+
+            if (
+                detectedWarehouses.length === 0
+            ) {
+
+                throw new Error(
+                    "Kolom gudang tidak berhasil ditemukan."
+                );
+            }
+
+            /*
+             * Bangun data stok.
+             */
+            const parsedData = [];
+
+            let currentCategory =
+                "UMUM";
+
+            for (
+                let i = headerRowIdx + 1;
+                i < jsonRows.length;
+                i++
+            ) {
+
+                const row =
+                    jsonRows[i] || [];
+
+                const descValue =
+                    row[descColIdx];
+
+                const desc =
+                    String(
+                        descValue ?? ""
+                    ).trim();
+
+                if (!desc) {
+                    continue;
+                }
+
+                const descNorm =
+                    normalizeText(desc);
+
+                /*
+                 * Abaikan baris total / cetak.
+                 */
+                if (
+                    descNorm === "TOTAL" ||
+                    descNorm.includes("GRAND TOTAL") ||
+                    descNorm.includes("CETAK DI")
+                ) {
+                    continue;
+                }
+
+                /*
+                 * Kategori bisa berada pada baris sendiri
+                 * dan berlaku ke baris berikutnya.
+                 */
+                if (
+                    katColIdx !== -1
+                ) {
+
+                    const katValue =
+                        String(
+                            row[katColIdx] ?? ""
+                        ).trim();
+
+                    const katNorm =
+                        normalizeText(katValue);
+
+                    if (
+                        katValue &&
+                        katNorm !== "0" &&
+                        katNorm !== "KATAGORI" &&
+                        katNorm !== "KATEGORI"
+                    ) {
+
+                        currentCategory =
+                            katValue;
+                    }
+                }
+
+                const qtys = {};
+
+                detectedWarehouses.forEach(
+                    warehouse => {
+
+                        const colIdx =
+                            whIndices[warehouse];
+
+                        const rawValue =
+                            colIdx !== undefined
+                                ? row[colIdx]
+                                : 0;
+
+                        qtys[warehouse] =
+                            parseExcelNumber(
+                                rawValue
+                            );
+                    }
+                );
+
+                parsedData.push({
+                    category:
+                        currentCategory,
+                    desc:
+                        desc,
+                    qtys:
+                        qtys
+                });
+            }
+
+            if (
+                parsedData.length === 0
+            ) {
+
+                throw new Error(
+                    "Header berhasil ditemukan, tetapi tidak ada data barang setelah header."
+                );
+            }
+
+            /*
+             * Masukkan data ke aplikasi.
+             */
+            masterStockData =
+                parsedData;
+
+            warehouses =
+                detectedWarehouses;
+
+            categories =
+                [
+                    ...new Set(
+                        masterStockData.map(
+                            item => item.category
+                        )
+                    )
+                ];
+
+            stateDeductions = {};
+            transactionLogs = [];
+
+            initDropdowns();
+            renderStokTable();
+            renderRekap();
+            initPenarikanCheckboxes();
+
+            document.getElementById(
+                "excelFileInfo"
+            ).innerText =
+                `${file.name} | Sheet: ${firstSheetName} | Header baris ${headerRowIdx + 1} | ${masterStockData.length} item | ${warehouses.length} gudang`;
+
+            showUploadStatus(
+                `✅ <b>${escapeHtml(file.name)}</b> berhasil dibaca.<br>
+                Sheet: <b>${escapeHtml(firstSheetName)}</b> |
+                Header: baris <b>${headerRowIdx + 1}</b> |
+                Data barang: <b>${masterStockData.length}</b> |
+                Gudang: <b>${warehouses.length}</b><br>
+                Gudang terdeteksi: ${detectedWarehouses.map(escapeHtml).join(", ")}`,
+                "success"
+            );
+
+        } catch (err) {
+
+            console.error(
+                "ERROR IMPORT EXCEL:",
+                err
+            );
+
+            showUploadStatus(
+                `❌ <b>Gagal membaca Excel.</b><br>
+                ${escapeHtml(err.message || String(err))}<br><br>
+                Pastikan file adalah Excel asli (.xls/.xlsx) dan memiliki header deskripsi barang serta kolom gudang.`,
+                "error"
+            );
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+
+/* ============================================================
+   CARI HEADER EXCEL OTOMATIS
+============================================================ */
+
+function findExcelHeader(rows) {
+
+    /*
+     * Kita tidak lagi menganggap baris pertama sebagai header.
+     * Cari sampai 50 baris pertama.
+     */
+
+    const maxRows =
+        Math.min(
+            rows.length,
+            50
+        );
+
+    let best = null;
+
+    for (
+        let r = 0;
+        r < maxRows;
+        r++
+    ) {
+
+        const row =
+            rows[r] || [];
+
+        if (!row.length) continue;
+
+        let descColIdx = -1;
+        let katColIdx = -1;
+
+        row.forEach(
+            (cell, idx) => {
+
+                const h =
+                    normalizeHeader(cell);
+
+                if (
+                    h === "KATEGORI" ||
+                    h === "KATAGORI" ||
+                    h.includes("KATEGORI")
+                ) {
+                    if (katColIdx === -1) {
+                        katColIdx = idx;
+                    }
+                }
+
+                if (
+                    h === "DESKRIPSI" ||
+                    h === "DESKRIPSI BARANG" ||
+                    h === "NAMA BARANG" ||
+                    h === "BARANG" ||
+                    h === "ITEM" ||
+                    h === "PRODUCT" ||
+                    h === "PRODUK" ||
+                    h === "DESCRIPTION"
+                ) {
+                    if (descColIdx === -1) {
+                        descColIdx = idx;
+                    }
+                }
+            }
+        );
+
+        /*
+         * Jika kolom deskripsi tidak bernama persis,
+         * coba cari kata "DESKRIPSI".
+         */
+        if (descColIdx === -1) {
+
+            row.forEach(
+                (cell, idx) => {
+
+                    const h =
+                        normalizeHeader(cell);
+
+                    if (
+                        h.includes("DESKRIPSI") ||
+                        h.includes("DESCRIPTION") ||
+                        h.includes("NAMA BARANG")
+                    ) {
+
+                        if (descColIdx === -1) {
+                            descColIdx = idx;
+                        }
+                    }
+                }
+            );
+        }
+
+        /*
+         * Jika tidak ada label deskripsi,
+         * tetapi ada kategori + banyak header,
+         * kemungkinan kolom pertama adalah deskripsi.
+         */
+        if (
+            descColIdx === -1 &&
+            katColIdx !== -1 &&
+            row.length >= 3
+        ) {
+            descColIdx = 0;
+        }
+
+        let nonEmptyCount =
+            row.filter(
+                x =>
+                    String(x ?? "").trim() !== ""
+            ).length;
+
+        /*
+         * Header dianggap valid jika:
+         * - punya deskripsi
+         * - atau kategori
+         * - dan minimal 3 kolom terisi.
+         */
+        if (
+            (descColIdx !== -1 ||
+             katColIdx !== -1) &&
+            nonEmptyCount >= 2
+        ) {
+
+            best = {
+                rowIndex: r,
+                headers: row,
+                descColIdx:
+                    descColIdx !== -1
+                        ? descColIdx
+                        : 0,
+                katColIdx:
+                    katColIdx
+            };
+
+            break;
+        }
+    }
+
+    /*
+     * Fallback:
+     * Jika Excel sangat sederhana dan tidak punya
+     * label Deskripsi/Kategori, gunakan baris pertama.
+     */
+    if (!best && rows.length > 0) {
+
+        const first =
+            rows[0] || [];
+
+        if (first.length >= 2) {
+
+            best = {
+                rowIndex: 0,
+                headers: first,
+                descColIdx: 0,
+                katColIdx: -1
+            };
+        }
+    }
+
+    return best;
+}
+
+
+/* ============================================================
+   DETEKSI KOLOM GUDANG
+============================================================ */
+
+function detectWarehouseColumns(
+    headers,
+    descColIdx,
+    katColIdx
+) {
+
+    const warehousesFound = [];
+    const indices = {};
+
+    headers.forEach(
+        (header, idx) => {
+
+            if (
+                idx === descColIdx ||
+                idx === katColIdx
+            ) {
+                return;
+            }
+
+            const original =
+                String(
+                    header ?? ""
+                ).trim();
+
+            if (!original) return;
+
+            const normalized =
+                normalizeHeader(
+                    original
+                );
+
+            if (
+                !normalized ||
+                normalized === "UNDEFINED" ||
+                EXCLUDED_COLUMNS.includes(normalized)
+            ) {
+                return;
+            }
+
+            /*
+             * Abaikan kolom yang jelas bukan gudang.
+             */
+            const ignoredPatterns = [
+                "HARGA",
+                "PRICE",
+                "SATUAN",
+                "UNIT",
+                "KODE",
+                "SKU",
+                "BARCODE",
+                "NOTE",
+                "CATATAN",
+                "TOTAL",
+                "JUMLAH"
+            ];
+
+            if (
+                ignoredPatterns.some(
+                    pattern =>
+                        normalized === pattern ||
+                        normalized.includes(pattern)
+                )
+            ) {
+                return;
+            }
+
+            /*
+             * Kolom yang tersisa dianggap gudang.
+             */
+            warehousesFound.push(
+                original
+            );
+
+            indices[original] =
+                idx;
+        }
+    );
+
+    return {
+        warehouses:
+            warehousesFound,
+        indices:
+            indices
+    };
+}
+
+
+/* ============================================================
+   KEYBOARD FILTER OTOMATIS
+============================================================ */
+
+[
+    "filterSku",
+    "filterKategori",
+    "filterGudang",
+    "filterStatus"
+].forEach(id => {
+
+    const el =
+        document.getElementById(id);
+
+    if (!el) return;
+
+    el.addEventListener(
+        "change",
+        renderStokTable
+    );
+});
+
+document
+    .getElementById("filterSku")
+    .addEventListener(
+        "input",
+        renderStokTable
+    );
+
+
+/* ============================================================
+   START
+============================================================ */
+
+window.onload = function() {
+
+    const tanggal =
+        new Date().toLocaleDateString(
+            "id-ID",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    document.getElementById(
+        "tanggalUpdate"
+    ).innerText =
+        `| Update ${tanggal}`;
+
+    loadSampleData();
+};
+
+</script>
+
 </body>
 </html>
