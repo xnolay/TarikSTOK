@@ -216,7 +216,7 @@
         let warehouses = [];
         let categories = [];
         let transactionLogs = [];
-        let stateDeductions = {}; // Menyimpan akumulasi perubahan stok per item dan per gudang
+        let stateDeductions = {}; 
 
         function switchTab(tab) {
             if (tab === 'stok') {
@@ -471,7 +471,7 @@
             sisaTujuanRes.innerText = sisaTujuan;
         }
 
-        // --- SIMPAN PENARIKAN & DOWNLOAD EXCEL DENGAN FORMAT TERTATA RAPI ---
+        // --- SIMPAN PENARIKAN & DOWNLOAD EXCEL TERTATA RAPI (SAMA PERSIS DENGAN GAMBAR REFERENSI) ---
         function simpanFormPenarikan(jenisPenarikan) {
             const selectedAsal = Array.from(document.querySelectorAll('.chk-asal:checked')).map(cb => cb.value);
             const selectedTujuan = Array.from(document.querySelectorAll('.chk-tujuan:checked')).map(cb => cb.value);
@@ -485,7 +485,7 @@
             let count = 0;
             let excelExportData = [];
 
-            // Header persis seperti contoh gambar referensi
+            // Header persis seperti gambar referensi
             excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
             excelExportData.push([`Jenis: ${jenisPenarikan}`]);
             excelExportData.push([`Asal: ${selectedAsal.join(', ')}`, "", `Tujuan: ${selectedTujuan.join(', ')}`]);
@@ -501,7 +501,7 @@
                 if (disetujui > 0 || diajukan > 0) {
                     const item = masterStockData[itemIdx];
 
-                    // 1. Kurangi stok di gudang asal secara proporsional
+                    // 1. Kurangi stok di gudang asal secara proporsional secara permanen
                     let sisaToDeduct = disetujui;
                     selectedAsal.forEach(asalW => {
                         if (sisaToDeduct <= 0) return;
@@ -571,7 +571,7 @@
             let fileName = `Pengajuan_${jenisPenarikan.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(workbook, fileName);
 
-            alert(`${jenisPenarikan} berhasil disimpan! Stok di gudang tujuan telah bertambah secara permanen untuk penarikan berikutnya, dan file Excel berhasil di-download.`);
+            alert(`${jenisPenarikan} berhasil disimpan! Stok tujuan telah bertambah permanen, dan file Excel laporan berhasil di-download.`);
             loadFormPenarikan(); 
         }
 
@@ -599,7 +599,7 @@
             });
         }
 
-        // --- PARSER EXCEL OTOMATIS (TIDAK MENGUBAH FITUR UPLOAD YANG SUDAH BERHASIL) ---
+        // --- PARSER EXCEL ANDA YANG SUDAH BERHASIL (TIDAK DIUBAH) ---
         document.getElementById('excelUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -650,7 +650,7 @@
 
                     warehouses = detectedWarehouses;
                     masterStockData = [];
-                    stateDeductions = {}; // Reset perubahan akumulasi stok saat upload file baru
+                    stateDeductions = {}; // Reset akumulasi stok saat upload file baru
 
                     let currentCategory = "UMUM";
                     for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
