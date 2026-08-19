@@ -187,7 +187,7 @@
 
                 <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                        Pilih Gudang Asal
+                        Pilih Gudang Asal (Bisa Centang Banyak)
                     </label>
 
                     <div id="containerAsal"
@@ -197,7 +197,7 @@
 
                 <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                        Pilih Gudang Tujuan
+                        Pilih Gudang Tujuan (Bisa Centang Banyak)
                     </label>
 
                     <div id="containerTujuan"
@@ -235,13 +235,13 @@
                     <button
                         onclick="simpanFormPenarikan('Penarikan 1')"
                         class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
-                        📥 Simpan Penarikan 1
+                        📥 Simpan Penarikan 1 (Download Excel)
                     </button>
 
                     <button
                         onclick="simpanFormPenarikan('Penarikan 2')"
                         class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow">
-                        📥 Simpan Penarikan 2
+                        📥 Simpan Penarikan 2 (Download Excel)
                     </button>
 
                 </div>
@@ -406,86 +406,50 @@ function normalizeHeader(value) {
 }
 
 function parseExcelNumber(value) {
-
     if (value === null || value === undefined || value === "") {
         return 0;
     }
-
     if (typeof value === "number") {
         return Number.isFinite(value) ? value : 0;
     }
-
     let str = String(value).trim();
-
     if (!str) return 0;
-
     str = str.replace(/\s/g, "");
-
-    // (1.234) = -1234
     if (/^\(.*\)$/.test(str)) {
         str = "-" + str.slice(1, -1);
     }
-
-    // Format Indonesia: 1.234,56
     if (str.includes(".") && str.includes(",")) {
         if (str.lastIndexOf(",") > str.lastIndexOf(".")) {
             str = str.replace(/\./g, "").replace(",", ".");
         } else {
             str = str.replace(/,/g, "");
         }
-    }
-    // 1.234 biasanya angka ribuan
-    else if (/^-?\d{1,3}(\.\d{3})+$/.test(str)) {
+    } else if (/^-?\d{1,3}(\.\d{3})+$/.test(str)) {
         str = str.replace(/\./g, "");
-    }
-    // 1,234 biasanya angka ribuan
-    else if (/^-?\d{1,3}(,\d{3})+$/.test(str)) {
+    } else if (/^-?\d{1,3}(,\d{3})+$/.test(str)) {
         str = str.replace(/,/g, "");
-    }
-    else {
+    } else {
         str = str.replace(/,/g, ".");
     }
-
     const result = parseFloat(str);
-
     return Number.isFinite(result) ? result : 0;
 }
 
 function showUploadStatus(message, type = "success") {
-
     const box = document.getElementById("uploadStatus");
-
     box.classList.remove(
         "hidden",
-        "bg-emerald-50",
-        "text-emerald-700",
-        "border-emerald-200",
-        "bg-red-50",
-        "text-red-700",
-        "border-red-200",
-        "bg-amber-50",
-        "text-amber-700",
-        "border-amber-200"
+        "bg-emerald-50", "text-emerald-700", "border-emerald-200",
+        "bg-red-50", "text-red-700", "border-red-200",
+        "bg-amber-50", "text-amber-700", "border-amber-200"
     );
 
     if (type === "error") {
-        box.classList.add(
-            "bg-red-50",
-            "text-red-700",
-            "border-red-200"
-        );
+        box.classList.add("bg-red-50", "text-red-700", "border-red-200");
     } else if (type === "warning") {
-        box.classList.add(
-            "bg-amber-50",
-            "text-amber-700",
-            "border-amber-200"
-        );
+        box.classList.add("bg-amber-50", "text-amber-700", "border-amber-200");
     } else {
-        box.classList.add(
-            "bg-emerald-50",
-            "text-emerald-700",
-            "border-emerald-200"
-        );
+        box.classList.add("bg-emerald-50", "text-emerald-700", "border-emerald-200");
     }
 
     box.innerHTML = message;
@@ -498,7 +462,6 @@ function showUploadStatus(message, type = "success") {
 ============================================================ */
 
 function switchTab(tab) {
-
     const stok = document.getElementById("section-stok");
     const penarikan = document.getElementById("section-penarikan");
 
@@ -506,26 +469,15 @@ function switchTab(tab) {
     const tabPenarikan = document.getElementById("tab-penarikan");
 
     if (tab === "stok") {
-
         stok.classList.remove("hidden");
         penarikan.classList.add("hidden");
-
-        tabStok.className =
-            "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600";
-
-        tabPenarikan.className =
-            "py-3 px-4 font-semibold text-slate-500";
-
+        tabStok.className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600";
+        tabPenarikan.className = "py-3 px-4 font-semibold text-slate-500";
     } else {
-
         stok.classList.add("hidden");
         penarikan.classList.remove("hidden");
-
-        tabPenarikan.className =
-            "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600";
-
-        tabStok.className =
-            "py-3 px-4 font-semibold text-slate-500";
+        tabPenarikan.className = "py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600";
+        tabStok.className = "py-3 px-4 font-semibold text-slate-500";
 
         initPenarikanCheckboxes();
         loadFormPenarikan();
@@ -538,75 +490,36 @@ function switchTab(tab) {
 ============================================================ */
 
 function loadDefaultData() {
-
     loadSampleData();
-
-    showUploadStatus(
-        "Data contoh berhasil dimuat. Anda sekarang dapat mengunggah file Excel.",
-        "success"
-    );
+    showUploadStatus("Data contoh berhasil dimuat. Anda sekarang dapat mengunggah file Excel.", "success");
 }
 
 function loadSampleData() {
-
     masterStockData = [
         {
             category: "COUGAR",
             desc: "SIDE PANEL ACRYLIC FOR QBX 2MM",
-            qtys: {
-                SUNTR: 12,
-                CURUG: 0,
-                SBY: 5,
-                M2M: 0,
-                SEMARANG: 2
-            }
+            qtys: { SUNTR: 12, CURUG: 0, SBY: 5, M2M: 0, SEMARANG: 2 }
         },
         {
             category: "FIBER Kabel",
             desc: "Kabel Patchcord 3 METER SC-SC/UPC G657A2",
-            qtys: {
-                SUNTR: 9,
-                CURUG: 2,
-                SBY: 45,
-                M2M: 2,
-                SEMARANG: 0
-            }
+            qtys: { SUNTR: 9, CURUG: 2, SBY: 45, M2M: 2, SEMARANG: 0 }
         },
         {
             category: "FIBER Kabel",
             desc: "FO CABLE eHOSE AIRBLOWN 12 CORE",
-            qtys: {
-                SUNTR: 0,
-                CURUG: 0,
-                SBY: 0,
-                M2M: 0,
-                SEMARANG: 0
-            }
+            qtys: { SUNTR: 0, CURUG: 0, SBY: 0, M2M: 0, SEMARANG: 0 }
         }
     ];
 
     warehouses = [
-        "SUNTR",
-        "M2M",
-        "CURUG",
-        "CIPUTAT",
-        "SBY",
-        "SBY-ITC",
-        "LBK",
-        "BALI",
-        "BALI 2",
-        "BDG",
-        "SERANG",
-        "KONSI",
-        "MALANG",
-        "RMA",
-        "SEMARANG",
-        "PRDCT"
+        "SUNTR", "M2M", "CURUG", "CIPUTAT", "SBY", "SBY-ITC",
+        "LBK", "BALI", "BALI 2", "BDG", "SERANG", "KONSI",
+        "MALANG", "RMA", "SEMARANG", "PRDCT"
     ];
 
-    categories = [
-        ...new Set(masterStockData.map(item => item.category))
-    ];
+    categories = [...new Set(masterStockData.map(item => item.category))];
 
     stateDeductions = {};
     transactionLogs = [];
@@ -622,33 +535,20 @@ function loadSampleData() {
 ============================================================ */
 
 function initDropdowns() {
+    const gudangSelect = document.getElementById("filterGudang");
+    const katSelect = document.getElementById("filterKategori");
 
-    const gudangSelect =
-        document.getElementById("filterGudang");
-
-    const katSelect =
-        document.getElementById("filterKategori");
-
-    gudangSelect.innerHTML =
-        '<option value="">Semua Gudang</option>';
-
+    gudangSelect.innerHTML = '<option value="">Semua Gudang</option>';
     warehouses.forEach(w => {
-
-        gudangSelect.innerHTML +=
-            `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`;
+        gudangSelect.innerHTML += `<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`;
     });
 
-    katSelect.innerHTML =
-        '<option value="">Semua Kategori</option>';
-
+    katSelect.innerHTML = '<option value="">Semua Kategori</option>';
     categories.forEach(k => {
-
-        katSelect.innerHTML +=
-            `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`;
+        katSelect.innerHTML += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`;
     });
 
-    document.getElementById("totalItemCount").innerText =
-        masterStockData.length;
+    document.getElementById("totalItemCount").innerText = masterStockData.length;
 }
 
 
@@ -657,7 +557,6 @@ function initDropdowns() {
 ============================================================ */
 
 function escapeHtml(value) {
-
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -672,152 +571,73 @@ function escapeHtml(value) {
 ============================================================ */
 
 function getStatusInfo(qty) {
-
     if (qty === 0) {
-        return {
-            text: "Kosong (0)",
-            class: "bg-red-100 text-red-700"
-        };
+        return { text: "Kosong (0)", class: "bg-red-100 text-red-700" };
     }
-
     if (qty >= 1 && qty <= 5) {
-        return {
-            text: "Menipis (" + qty + ")",
-            class: "bg-amber-100 text-amber-700"
-        };
+        return { text: "Menipis (" + qty + ")", class: "bg-amber-100 text-amber-700" };
     }
-
-    return {
-        text: "Aman (" + qty + ")",
-        class: "bg-emerald-100 text-emerald-700"
-    };
+    return { text: "Aman (" + qty + ")", class: "bg-emerald-100 text-emerald-700" };
 }
 
 function getEffectiveQty(itemIdx, warehouse) {
-
-    const base =
-        Number(masterStockData[itemIdx]?.qtys?.[warehouse] || 0);
-
-    const deduction =
-        Number(stateDeductions[itemIdx]?.[warehouse] || 0);
-
+    const base = Number(masterStockData[itemIdx]?.qtys?.[warehouse] || 0);
+    const deduction = Number(stateDeductions[itemIdx]?.[warehouse] || 0);
     return Math.max(0, base + deduction);
 }
 
 function renderStokTable() {
-
-    const tbody =
-        document.getElementById("stokTableBody");
-
-    const countStatus =
-        document.getElementById("stokCountStatus");
-
+    const tbody = document.getElementById("stokTableBody");
+    const countStatus = document.getElementById("stokCountStatus");
     tbody.innerHTML = "";
 
-    const searchSku =
-        document.getElementById("filterSku").value
-            .toLowerCase()
-            .trim();
-
-    const filterKat =
-        document.getElementById("filterKategori").value;
-
-    const filterGudang =
-        document.getElementById("filterGudang").value;
-
-    const filterStatus =
-        document.getElementById("filterStatus").value;
+    const searchSku = document.getElementById("filterSku").value.toLowerCase().trim();
+    const filterKat = document.getElementById("filterKategori").value;
+    const filterGudang = document.getElementById("filterGudang").value;
+    const filterStatus = document.getElementById("filterStatus").value;
 
     let rows = [];
-
     masterStockData.forEach((item, itemIdx) => {
-
         warehouses.forEach(wh => {
-
             rows.push({
                 category: item.category,
                 desc: item.desc,
                 gudang: wh,
                 qty: getEffectiveQty(itemIdx, wh)
             });
-
         });
-
     });
 
     const filtered = rows.filter(r => {
-
-        const matchSku =
-            r.desc.toLowerCase().includes(searchSku);
-
-        const matchKat =
-            filterKat === "" || r.category === filterKat;
-
-        const matchGudang =
-            filterGudang === "" || r.gudang === filterGudang;
+        const matchSku = r.desc.toLowerCase().includes(searchSku);
+        const matchKat = filterKat === "" || r.category === filterKat;
+        const matchGudang = filterGudang === "" || r.gudang === filterGudang;
 
         let matchStatus = true;
+        if (filterStatus === "0") matchStatus = r.qty === 0;
+        if (filterStatus === "menipis") matchStatus = r.qty >= 1 && r.qty <= 5;
+        if (filterStatus === "aman") matchStatus = r.qty > 5;
 
-        if (filterStatus === "0") {
-            matchStatus = r.qty === 0;
-        }
-
-        if (filterStatus === "menipis") {
-            matchStatus = r.qty >= 1 && r.qty <= 5;
-        }
-
-        if (filterStatus === "aman") {
-            matchStatus = r.qty > 5;
-        }
-
-        return matchSku &&
-               matchKat &&
-               matchGudang &&
-               matchStatus;
+        return matchSku && matchKat && matchGudang && matchStatus;
     });
 
-    countStatus.innerText =
-        `Menampilkan ${filtered.length} baris data dari ${rows.length} baris.`;
+    countStatus.innerText = `Menampilkan ${filtered.length} baris data dari ${rows.length} baris.`;
 
     if (filtered.length === 0) {
-
-        tbody.innerHTML =
-            `<tr>
-                <td colspan="5" class="p-6 text-center text-slate-400">
-                    Tidak ada data yang sesuai filter.
-                </td>
-            </tr>`;
-
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Tidak ada data yang sesuai filter.</td></tr>`;
         return;
     }
 
     filtered.slice(0, 1000).forEach(r => {
-
-        const status =
-            getStatusInfo(r.qty);
-
+        const status = getStatusInfo(r.qty);
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50">
-                <td class="p-3 font-medium text-slate-700">
-                    ${escapeHtml(r.desc)}
-                </td>
-
-                <td class="p-3 text-slate-600 text-xs font-semibold">
-                    ${escapeHtml(r.category || "-")}
-                </td>
-
-                <td class="p-3 text-slate-600">
-                    ${escapeHtml(r.gudang)}
-                </td>
-
-                <td class="p-3 text-center font-bold">
-                    ${r.qty}
-                </td>
-
+                <td class="p-3 font-medium text-slate-700">${escapeHtml(r.desc)}</td>
+                <td class="p-3 text-slate-600 text-xs font-semibold">${escapeHtml(r.category || "-")}</td>
+                <td class="p-3 text-slate-600">${escapeHtml(r.gudang)}</td>
+                <td class="p-3 text-center font-bold">${r.qty}</td>
                 <td class="p-3 text-center">
-                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${status.class}">
-                        ${status.text}
-                    </span>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${status.class}">${status.text}</span>
                 </td>
             </tr>
         `;
@@ -830,56 +650,29 @@ function renderStokTable() {
 ============================================================ */
 
 function initPenarikanCheckboxes() {
+    const containerAsal = document.getElementById("containerAsal");
+    const containerTujuan = document.getElementById("containerTujuan");
 
-    const containerAsal =
-        document.getElementById("containerAsal");
-
-    const containerTujuan =
-        document.getElementById("containerTujuan");
-
-    const checkedAsalOld =
-        Array.from(
-            document.querySelectorAll(".chk-asal:checked")
-        ).map(cb => cb.value);
-
-    const checkedTujuanOld =
-        Array.from(
-            document.querySelectorAll(".chk-tujuan:checked")
-        ).map(cb => cb.value);
+    const checkedAsalOld = Array.from(document.querySelectorAll(".chk-asal:checked")).map(cb => cb.value);
+    const checkedTujuanOld = Array.from(document.querySelectorAll(".chk-tujuan:checked")).map(cb => cb.value);
 
     containerAsal.innerHTML = "";
     containerTujuan.innerHTML = "";
 
     warehouses.forEach((w, idx) => {
-
-        const asalChecked =
-            checkedAsalOld.length > 0
-                ? checkedAsalOld.includes(w)
-                : idx === 0;
-
-        const tujuanChecked =
-            checkedTujuanOld.length > 0
-                ? checkedTujuanOld.includes(w)
-                : idx === 1;
+        const asalChecked = checkedAsalOld.length > 0 ? checkedAsalOld.includes(w) : idx === 0;
+        const tujuanChecked = checkedTujuanOld.length > 0 ? checkedTujuanOld.includes(w) : idx === 1;
 
         containerAsal.innerHTML += `
             <label class="flex items-center gap-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                <input
-                    type="checkbox"
-                    value="${escapeHtml(w)}"
-                    class="chk-asal rounded text-blue-600"
-                    ${asalChecked ? "checked" : ""}>
+                <input type="checkbox" value="${escapeHtml(w)}" class="chk-asal rounded text-blue-600" ${asalChecked ? "checked" : ""}>
                 <span>${escapeHtml(w)}</span>
             </label>
         `;
 
         containerTujuan.innerHTML += `
             <label class="flex items-center gap-1.5 text-xs font-medium cursor-pointer bg-white px-2.5 py-1 rounded border shadow-sm">
-                <input
-                    type="checkbox"
-                    value="${escapeHtml(w)}"
-                    class="chk-tujuan rounded text-emerald-600"
-                    ${tujuanChecked ? "checked" : ""}>
+                <input type="checkbox" value="${escapeHtml(w)}" class="chk-tujuan rounded text-emerald-600" ${tujuanChecked ? "checked" : ""}>
                 <span>${escapeHtml(w)}</span>
             </label>
         `;
@@ -892,177 +685,78 @@ function initPenarikanCheckboxes() {
 ============================================================ */
 
 function loadFormPenarikan() {
+    const selectedAsal = Array.from(document.querySelectorAll(".chk-asal:checked")).map(cb => cb.value);
+    const selectedTujuan = Array.from(document.querySelectorAll(".chk-tujuan:checked")).map(cb => cb.value);
+    const filterStokTujuan = document.getElementById("filterStokPenarikan").value;
+    const activeCategory = document.getElementById("filterKategori").value;
+    const tbody = document.getElementById("excelTableBody");
+    const infoStatus = document.getElementById("excelInfoStatus");
 
-    const selectedAsal =
-        Array.from(
-            document.querySelectorAll(".chk-asal:checked")
-        ).map(cb => cb.value);
-
-    const selectedTujuan =
-        Array.from(
-            document.querySelectorAll(".chk-tujuan:checked")
-        ).map(cb => cb.value);
-
-    const filterStokTujuan =
-        document.getElementById("filterStokPenarikan").value;
-
-    const activeCategory =
-        document.getElementById("filterKategori").value;
-
-    const tbody =
-        document.getElementById("excelTableBody");
-
-    const infoStatus =
-        document.getElementById("excelInfoStatus");
-
-    if (
-        selectedAsal.length === 0 ||
-        selectedTujuan.length === 0
-    ) {
-
-        tbody.innerHTML =
-            `<tr>
-                <td colspan="9" class="p-6 text-center text-slate-400">
-                    Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan.
-                </td>
-            </tr>`;
-
+    if (selectedAsal.length === 0 || selectedTujuan.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Silakan centang minimal 1 Gudang Asal dan 1 Gudang Tujuan.</td></tr>`;
         return;
     }
 
-    infoStatus.innerText =
-        `Kategori: ${activeCategory || "Semua"} | Asal: [${selectedAsal.join(", ")}] ➔ Tujuan: [${selectedTujuan.join(", ")}]`;
-
-    tbody.innerHTML =
-        `<tr>
-            <td colspan="9" class="p-6 text-center text-blue-600 font-semibold">
-                Memuat data barang...
-            </td>
-        </tr>`;
+    infoStatus.innerText = `Kategori: ${activeCategory || "Semua"} | Asal: [${selectedAsal.join(", ")}] ➔ Tujuan: [${selectedTujuan.join(", ")}]`;
+    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-blue-600 font-semibold">Memuat data barang...</td></tr>`;
 
     setTimeout(() => {
-
         tbody.innerHTML = "";
-
         let rowCount = 0;
 
         masterStockData.forEach((item, index) => {
-
-            if (
-                activeCategory &&
-                item.category !== activeCategory
-            ) {
-                return;
-            }
+            if (activeCategory && item.category !== activeCategory) return;
 
             let totalStokAsal = 0;
-
             selectedAsal.forEach(asalW => {
-                totalStokAsal +=
-                    getEffectiveQty(index, asalW);
+                totalStokAsal += getEffectiveQty(index, asalW);
             });
 
             let totalStokTujuan = 0;
-
             selectedTujuan.forEach(tujuanW => {
-                totalStokTujuan +=
-                    getEffectiveQty(index, tujuanW);
+                totalStokTujuan += getEffectiveQty(index, tujuanW);
             });
 
-            if (
-                totalStokAsal === 0 &&
-                totalStokTujuan === 0
-            ) {
-                return;
-            }
+            // Sesuai permintaan: Jika stok asal DAN tujuan sama-sama 0, jangan tampilkan
+            if (totalStokAsal === 0 && totalStokTujuan === 0) return;
 
             let matchFilter = true;
-
-            if (
-                filterStokTujuan === "lt10" &&
-                totalStokTujuan >= 10
-            ) {
-                matchFilter = false;
-            }
-
-            if (
-                filterStokTujuan === "lt50" &&
-                totalStokTujuan >= 50
-            ) {
-                matchFilter = false;
-            }
-
-            if (
-                filterStokTujuan === "gt50" &&
-                totalStokTujuan <= 50
-            ) {
-                matchFilter = false;
-            }
+            if (filterStokTujuan === "lt10" && totalStokTujuan >= 10) matchFilter = false;
+            if (filterStokTujuan === "lt50" && totalStokTujuan >= 50) matchFilter = false;
+            if (filterStokTujuan === "gt50" && totalStokTujuan <= 50) matchFilter = false;
 
             if (!matchFilter) return;
 
             rowCount++;
 
             tbody.innerHTML += `
-                <tr
-                    class="hover:bg-slate-50 excel-row"
-                    data-item-idx="${index}">
-
-                    <td class="p-2 border-r text-center font-medium">
-                        ${rowCount}
-                    </td>
-
+                <tr class="hover:bg-slate-50 excel-row" data-item-idx="${index}">
+                    <td class="p-2 border-r text-center font-medium">${rowCount}</td>
                     <td class="p-2 border-r font-bold text-slate-800">
                         ${escapeHtml(item.desc)}
-                        <div class="text-[10px] text-slate-500 font-normal">
-                            Kategori: ${escapeHtml(item.category)}
-                        </div>
+                        <div class="text-[10px] text-slate-500 font-normal">Kategori: ${escapeHtml(item.category)}</div>
                     </td>
-
-                    <td
-                        class="p-2 border-r text-center font-bold text-blue-700 bg-blue-50 stok-asal-cell"
-                        data-base="${totalStokAsal}">
+                    <td class="p-2 border-r text-center font-bold text-blue-700 bg-blue-50 stok-asal-cell" data-base="${totalStokAsal}">
                         ${totalStokAsal}
                     </td>
-
                     <td class="p-2 border-r text-center">
-                        <input
-                            type="number"
-                            min="0"
-                            value="0"
-                            class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold"
-                            oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
+                        <input type="number" min="0" value="0" class="input-diajukan border rounded px-1.5 py-1 text-xs w-20 text-center font-bold" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
                     </td>
-
                     <td class="p-2 border-r text-center">
-                        <input
-                            type="number"
-                            min="0"
-                            value="0"
-                            class="input-disetujui border rounded px-1.5 py-1 text-xs w-20 text-center font-bold"
-                            oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
+                        <input type="number" min="0" value="0" class="input-disetujui border rounded px-1.5 py-1 text-xs w-20 text-center font-bold" oninput="hitungKalkulasiExcel(this, ${totalStokAsal}, ${totalStokTujuan})">
                     </td>
-
-                    <td
-                        class="p-2 border-r text-center font-bold text-emerald-700 bg-emerald-50 stok-tujuan-cell">
+                    <td class="p-2 border-r text-center font-bold text-emerald-700 bg-emerald-50 stok-tujuan-cell">
                         ${totalStokTujuan}
                     </td>
-
                     <td class="p-2 border-r">
-                        <input
-                            type="text"
-                            placeholder="Keterangan..."
-                            class="input-ket border rounded px-2 py-1 text-xs w-full">
+                        <input type="text" placeholder="Keterangan..." class="input-ket border rounded px-2 py-1 text-xs w-full">
                     </td>
-
                     <td class="p-2 border-r text-center font-bold text-red-600 sisa-asal-res">
                         ${totalStokAsal}
                     </td>
-
                     <td class="p-2 text-center font-bold text-indigo-600 sisa-tujuan-res">
                         ${totalStokTujuan}
                     </td>
-
                 </tr>
             `;
 
@@ -1070,15 +764,8 @@ function loadFormPenarikan() {
         });
 
         if (rowCount === 0) {
-
-            tbody.innerHTML =
-                `<tr>
-                    <td colspan="9" class="p-6 text-center text-slate-400">
-                        Tidak ada barang yang sesuai filter.
-                    </td>
-                </tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada barang yang sesuai filter.</td></tr>`;
         }
-
     }, 20);
 }
 
@@ -1087,38 +774,15 @@ function loadFormPenarikan() {
    KALKULASI
 ============================================================ */
 
-function hitungKalkulasiExcel(
-    inputElem,
-    stokAsalMax,
-    stokTujuanAwal
-) {
+function hitungKalkulasiExcel(inputElem, stokAsalMax, stokTujuanAwal) {
+    const row = inputElem.closest("tr");
+    const diajukanInput = row.querySelector(".input-diajukan");
+    const disetujuiInput = row.querySelector(".input-disetujui");
+    const sisaAsalRes = row.querySelector(".sisa-asal-res");
+    const sisaTujuanRes = row.querySelector(".sisa-tujuan-res");
 
-    const row =
-        inputElem.closest("tr");
-
-    const diajukanInput =
-        row.querySelector(".input-diajukan");
-
-    const disetujuiInput =
-        row.querySelector(".input-disetujui");
-
-    const sisaAsalRes =
-        row.querySelector(".sisa-asal-res");
-
-    const sisaTujuanRes =
-        row.querySelector(".sisa-tujuan-res");
-
-    let diajukan =
-        Math.max(
-            0,
-            parseInt(diajukanInput.value) || 0
-        );
-
-    let disetujui =
-        Math.max(
-            0,
-            parseInt(disetujuiInput.value) || 0
-        );
+    let diajukan = Math.max(0, parseInt(diajukanInput.value) || 0);
+    let disetujui = Math.max(0, parseInt(disetujuiInput.value) || 0);
 
     if (diajukan > stokAsalMax) {
         diajukan = stokAsalMax;
@@ -1130,184 +794,81 @@ function hitungKalkulasiExcel(
         disetujuiInput.value = disetujui;
     }
 
-    const sisaAsal =
-        stokAsalMax - disetujui;
+    const sisaAsal = stokAsalMax - disetujui;
+    const sisaTujuan = stokTujuanAwal + disetujui;
 
-    const sisaTujuan =
-        stokTujuanAwal + disetujui;
-
-    sisaAsalRes.innerText =
-        sisaAsal;
-
-    sisaTujuanRes.innerText =
-        sisaTujuan;
+    sisaAsalRes.innerText = sisaAsal;
+    sisaTujuanRes.innerText = sisaTujuan;
 }
 
 
 /* ============================================================
-   SIMPAN PENARIKAN
+   SIMPAN PENARIKAN & UPDATE STOK PERMANEN
 ============================================================ */
 
 function simpanFormPenarikan(jenisPenarikan) {
+    const selectedAsal = Array.from(document.querySelectorAll(".chk-asal:checked")).map(cb => cb.value);
+    const selectedTujuan = Array.from(document.querySelectorAll(".chk-tujuan:checked")).map(cb => cb.value);
 
-    const selectedAsal =
-        Array.from(
-            document.querySelectorAll(".chk-asal:checked")
-        ).map(cb => cb.value);
-
-    const selectedTujuan =
-        Array.from(
-            document.querySelectorAll(".chk-tujuan:checked")
-        ).map(cb => cb.value);
-
-    if (
-        selectedAsal.length === 0 ||
-        selectedTujuan.length === 0
-    ) {
-
-        alert(
-            "Pilih minimal 1 Gudang Asal dan 1 Gudang Tujuan terlebih dahulu!"
-        );
-
+    if (selectedAsal.length === 0 || selectedTujuan.length === 0) {
+        alert("Pilih minimal 1 Gudang Asal dan 1 Gudang Tujuan terlebih dahulu!");
         return;
     }
 
-    const rows =
-        document.querySelectorAll(".excel-row");
-
+    const rows = document.querySelectorAll(".excel-row");
     let count = 0;
-
     const excelExportData = [];
 
-    excelExportData.push([
-        "PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"
-    ]);
-
-    excelExportData.push([
-        `Jenis: ${jenisPenarikan}`
-    ]);
-
-    excelExportData.push([
-        `Asal: ${selectedAsal.join(", ")}`,
-        "",
-        `Tujuan: ${selectedTujuan.join(", ")}`
-    ]);
-
+    // Format layout Excel persis seperti gambar referensi Anda
+    excelExportData.push(["PT. GLORI MITRA SUKSES - PENGAJUAN PENARIKAN BARANG"]);
+    excelExportData.push([`Jenis: ${jenisPenarikan}`]);
+    excelExportData.push([`Asal: ${selectedAsal.join(", ")}`, "", `Tujuan: ${selectedTujuan.join(", ")}`]);
     excelExportData.push([]);
-
     excelExportData.push([
-        "No",
-        "Deskripsi Barang",
-        "Total Stok Asal",
-        "Jumlah Diajukan",
-        "Jumlah Disetujui",
-        "Total Stok Tujuan",
-        "Keterangan",
-        "Sisa Stok Asal",
-        "Sisa Stok Tujuan"
+        "No", "Deskripsi Barang", "Total Stok Asal",
+        "Jumlah Diajukan", "Jumlah Disetujui", "Total Stok Tujuan",
+        "Keterangan", "Sisa Stok Asal", "Sisa Stok Tujuan"
     ]);
 
     rows.forEach(row => {
+        const itemIdx = Number(row.getAttribute("data-item-idx"));
+        const diajukan = Math.max(0, parseInt(row.querySelector(".input-diajukan").value) || 0);
+        const disetujui = Math.max(0, parseInt(row.querySelector(".input-disetujui").value) || 0);
+        const ket = row.querySelector(".input-ket").value;
 
-        const itemIdx =
-            Number(row.getAttribute("data-item-idx"));
+        if (diajukan === 0 && disetujui === 0) return;
 
-        const diajukan =
-            Math.max(
-                0,
-                parseInt(
-                    row.querySelector(".input-diajukan").value
-                ) || 0
-            );
+        const item = masterStockData[itemIdx];
 
-        const disetujui =
-            Math.max(
-                0,
-                parseInt(
-                    row.querySelector(".input-disetujui").value
-                ) || 0
-            );
-
-        const ket =
-            row.querySelector(".input-ket").value;
-
-        if (
-            diajukan === 0 &&
-            disetujui === 0
-        ) {
-            return;
-        }
-
-        const item =
-            masterStockData[itemIdx];
-
-        let sisaToDeduct =
-            disetujui;
-
+        // 1. Kurangi stok asal secara permanen
+        let sisaToDeduct = disetujui;
         selectedAsal.forEach(asalW => {
-
             if (sisaToDeduct <= 0) return;
-
-            const base =
-                Number(item.qtys[asalW] || 0);
-
-            const ded =
-                Number(
-                    stateDeductions[itemIdx]?.[asalW] || 0
-                );
-
-            const avail =
-                Math.max(0, base + ded);
+            const base = Number(item.qtys[asalW] || 0);
+            const ded = Number(stateDeductions[itemIdx]?.[asalW] || 0);
+            const avail = Math.max(0, base + ded);
 
             if (avail > 0) {
-
-                const take =
-                    Math.min(
-                        sisaToDeduct,
-                        avail
-                    );
-
-                stateDeductions[itemIdx] =
-                    stateDeductions[itemIdx] || {};
-
-                stateDeductions[itemIdx][asalW] =
-                    ded - take;
-
+                const take = Math.min(sisaToDeduct, avail);
+                stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
+                stateDeductions[itemIdx][asalW] = ded - take; // Simpan minus
                 sisaToDeduct -= take;
             }
         });
 
-        let sisaToAdd =
-            disetujui;
+        // 2. Tambah stok tujuan secara permanen
+        let sisaToAdd = disetujui;
+        selectedTujuan.forEach((tujuanW, tIdx) => {
+            if (sisaToAdd <= 0) return;
+            const remainingWarehouses = selectedTujuan.length - tIdx;
+            const addShare = Math.ceil(sisaToAdd / remainingWarehouses);
 
-        selectedTujuan.forEach(
-            (tujuanW, tIdx) => {
+            stateDeductions[itemIdx] = stateDeductions[itemIdx] || {};
+            const curAdd = Number(stateDeductions[itemIdx][tujuanW] || 0);
+            stateDeductions[itemIdx][tujuanW] = curAdd + addShare; // Simpan plus
 
-                if (sisaToAdd <= 0) return;
-
-                const remainingWarehouses =
-                    selectedTujuan.length - tIdx;
-
-                const addShare =
-                    Math.ceil(
-                        sisaToAdd /
-                        remainingWarehouses
-                    );
-
-                stateDeductions[itemIdx] =
-                    stateDeductions[itemIdx] || {};
-
-                const curAdd =
-                    Number(
-                        stateDeductions[itemIdx][tujuanW] || 0
-                    );
-
-                stateDeductions[itemIdx][tujuanW] =
-                    curAdd + addShare;
-
-                sisaToAdd -= addShare;
-            }
-        );
+            sisaToAdd -= addShare;
+        });
 
         transactionLogs.push({
             type: jenisPenarikan,
@@ -1334,59 +895,28 @@ function simpanFormPenarikan(jenisPenarikan) {
     });
 
     if (count === 0) {
-
-        alert(
-            "Tidak ada barang yang diisi jumlah pengajuannya."
-        );
-
+        alert("Tidak ada barang yang diisi jumlah pengajuannya.");
         return;
     }
 
     renderRekap();
     renderStokTable();
 
-    if (
-        typeof XLSX === "undefined"
-    ) {
-
-        alert(
-            "Library Excel tidak berhasil dimuat. Periksa koneksi internet."
-        );
-
+    if (typeof XLSX === "undefined") {
+        alert("Library Excel tidak berhasil dimuat.");
         return;
     }
 
-    const worksheet =
-        XLSX.utils.aoa_to_sheet(
-            excelExportData
-        );
+    const worksheet = XLSX.utils.aoa_to_sheet(excelExportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Pengajuan Penarikan");
 
-    const workbook =
-        XLSX.utils.book_new();
+    const tanggal = new Date().toISOString().slice(0, 10);
+    const fileName = `Pengajuan_${jenisPenarikan.replace(/\s+/g, "_")}_${tanggal}.xlsx`;
 
-    XLSX.utils.book_append_sheet(
-        workbook,
-        worksheet,
-        "Pengajuan Penarikan"
-    );
+    XLSX.writeFile(workbook, fileName);
 
-    const tanggal =
-        new Date()
-            .toISOString()
-            .slice(0, 10);
-
-    const fileName =
-        `Pengajuan_${jenisPenarikan.replace(/\s+/g, "_")}_${tanggal}.xlsx`;
-
-    XLSX.writeFile(
-        workbook,
-        fileName
-    );
-
-    alert(
-        `${jenisPenarikan} berhasil disimpan dan file Excel berhasil di-download.`
-    );
-
+    alert(`${jenisPenarikan} berhasil disimpan! Stok di gudang tujuan telah bertambah permanen, dan file laporan Excel berhasil di-download.`);
     loadFormPenarikan();
 }
 
@@ -1396,423 +926,144 @@ function simpanFormPenarikan(jenisPenarikan) {
 ============================================================ */
 
 function renderRekap() {
-
-    const tbody =
-        document.getElementById("rekapTableBody");
-
+    const tbody = document.getElementById("rekapTableBody");
     tbody.innerHTML = "";
 
     if (transactionLogs.length === 0) {
-
-        tbody.innerHTML =
-            `<tr>
-                <td colspan="7" class="p-4 text-center text-slate-400">
-                    Belum ada riwayat penarikan tersimpan.
-                </td>
-            </tr>`;
-
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada riwayat penarikan tersimpan.</td></tr>`;
         return;
     }
 
-    transactionLogs.forEach(
-        (log, index) => {
-
-            tbody.innerHTML += `
-                <tr class="hover:bg-slate-50">
-
-                    <td class="p-2 border-b">
-                        ${index + 1}
-                    </td>
-
-                    <td class="p-2 border-b">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-                            log.type === "Penarikan 1"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-indigo-100 text-indigo-800"
-                        }">
-                            ${escapeHtml(log.type)}
-                        </span>
-                    </td>
-
-                    <td class="p-2 border-b font-semibold">
-                        ${escapeHtml(log.asal)}
-                    </td>
-
-                    <td class="p-2 border-b font-semibold text-blue-900">
-                        ${escapeHtml(log.tujuan)}
-                    </td>
-
-                    <td class="p-2 border-b">
-                        ${escapeHtml(log.desc)}
-                    </td>
-
-                    <td class="p-2 border-b text-center font-bold">
-                        ${log.diajukan}
-                    </td>
-
-                    <td class="p-2 border-b text-center font-bold">
-                        ${log.disetujui}
-                    </td>
-
-                </tr>
-            `;
-        }
-    );
+    transactionLogs.forEach((log, index) => {
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+                <td class="p-2 border-b">${index + 1}</td>
+                <td class="p-2 border-b">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${log.type === "Penarikan 1" ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}">
+                        ${escapeHtml(log.type)}
+                    </span>
+                </td>
+                <td class="p-2 border-b font-semibold">${escapeHtml(log.asal)}</td>
+                <td class="p-2 border-b font-semibold text-blue-900">${escapeHtml(log.tujuan)}</td>
+                <td class="p-2 border-b">${escapeHtml(log.desc)}</td>
+                <td class="p-2 border-b text-center font-bold">${log.diajukan}</td>
+                <td class="p-2 border-b text-center font-bold">${log.disetujui}</td>
+            </tr>
+        `;
+    });
 }
 
 
 /* ============================================================
-   EXCEL IMPORT - VERSI DIPERBAIKI
+   EXCEL IMPORT (FUNGSI UPLOAD ANDA YANG SUDAH BERHASIL)
 ============================================================ */
 
-document
-    .getElementById("excelUpload")
-    .addEventListener("change", function(e) {
-
-        const file =
-            e.target.files?.[0];
-
-        if (!file) return;
-
-        importExcelFile(file);
-
-        // Supaya file yang sama dapat dipilih lagi
-        e.target.value = "";
-    });
-
+document.getElementById("excelUpload").addEventListener("change", function(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    importExcelFile(file);
+    e.target.value = "";
+});
 
 function importExcelFile(file) {
-
-    if (
-        typeof XLSX === "undefined"
-    ) {
-
-        showUploadStatus(
-            "❌ Library Excel (SheetJS/XLSX) belum berhasil dimuat. Pastikan komputer terhubung ke internet lalu refresh halaman.",
-            "error"
-        );
-
+    if (typeof XLSX === "undefined") {
+        showUploadStatus("❌ Library Excel belum dimuat.", "error");
         return;
     }
 
-    const extension =
-        file.name
-            .split(".")
-            .pop()
-            .toLowerCase();
+    showUploadStatus(`⏳ Sedang membaca file <b>${escapeHtml(file.name)}</b>...`, "warning");
 
-    if (
-        extension !== "xls" &&
-        extension !== "xlsx"
-    ) {
-
-        showUploadStatus(
-            "❌ File harus berformat .xls atau .xlsx.",
-            "error"
-        );
-
-        return;
-    }
-
-    showUploadStatus(
-        `⏳ Sedang membaca file <b>${escapeHtml(file.name)}</b>...`,
-        "warning"
-    );
-
-    const reader =
-        new FileReader();
-
+    const reader = new FileReader();
     reader.onerror = function() {
-
-        showUploadStatus(
-            "❌ Browser gagal membaca file tersebut.",
-            "error"
-        );
+        showUploadStatus("❌ Browser gagal membaca file.", "error");
     };
 
     reader.onload = function(e) {
-
         try {
+            const arrayBuffer = e.target.result;
+            const data = new Uint8Array(arrayBuffer);
+            const workbook = XLSX.read(data, { type: "array" });
 
-            const arrayBuffer =
-                e.target.result;
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", raw: false });
 
-            const data =
-                new Uint8Array(arrayBuffer);
-
-            const workbook =
-                XLSX.read(data, {
-                    type: "array",
-                    cellDates: false,
-                    cellNF: false,
-                    cellText: true
-                });
-
-            if (
-                !workbook.SheetNames ||
-                workbook.SheetNames.length === 0
-            ) {
-
-                throw new Error(
-                    "Workbook tidak mempunyai sheet."
-                );
+            if (!jsonRows || jsonRows.length === 0) {
+                throw new Error("Sheet Excel kosong.");
             }
 
-            const firstSheetName =
-                workbook.SheetNames[0];
-
-            const worksheet =
-                workbook.Sheets[firstSheetName];
-
-            if (!worksheet) {
-
-                throw new Error(
-                    "Sheet pertama tidak dapat dibaca."
-                );
-            }
-
-            /*
-             * header: 1 membuat data menjadi array 2 dimensi.
-             * Ini kompatibel dengan XLS dan XLSX.
-             */
-            const jsonRows =
-                XLSX.utils.sheet_to_json(
-                    worksheet,
-                    {
-                        header: 1,
-                        defval: "",
-                        raw: false,
-                        blankrows: false
-                    }
-                );
-
-            if (
-                !jsonRows ||
-                jsonRows.length === 0
-            ) {
-
-                throw new Error(
-                    "Sheet Excel kosong."
-                );
-            }
-
-            const headerInfo =
-                findExcelHeader(jsonRows);
-
+            const headerInfo = findExcelHeader(jsonRows);
             if (!headerInfo) {
-
-                throw new Error(
-                    "Baris header tidak ditemukan. Pastikan file memiliki kolom Deskripsi Barang dan kolom Gudang."
-                );
+                throw new Error("Baris header tidak ditemukan.");
             }
 
-            const headerRowIdx =
-                headerInfo.rowIndex;
+            const headerRowIdx = headerInfo.rowIndex;
+            const headers = headerInfo.headers;
+            const descColIdx = headerInfo.descColIdx;
+            const katColIdx = headerInfo.katColIdx;
 
-            const headers =
-                headerInfo.headers;
+            const detected = detectWarehouseColumns(headers, descColIdx, katColIdx);
+            let detectedWarehouses = detected.warehouses;
+            let whIndices = detected.indices;
 
-            const descColIdx =
-                headerInfo.descColIdx;
-
-            const katColIdx =
-                headerInfo.katColIdx;
-
-            /*
-             * Deteksi kolom gudang.
-             */
-            const detected =
-                detectWarehouseColumns(
-                    headers,
-                    descColIdx,
-                    katColIdx
-                );
-
-            let detectedWarehouses =
-                detected.warehouses;
-
-            let whIndices =
-                detected.indices;
-
-            /*
-             * Jika tidak menemukan gudang dari header,
-             * coba membaca pola kolom setelah deskripsi.
-             */
-            if (
-                detectedWarehouses.length === 0
-            ) {
-
-                for (
-                    let idx = 0;
-                    idx < headers.length;
-                    idx++
-                ) {
-
-                    if (
-                        idx === descColIdx ||
-                        idx === katColIdx
-                    ) {
-                        continue;
-                    }
-
-                    const name =
-                        normalizeHeader(
-                            headers[idx]
-                        );
-
-                    if (
-                        name &&
-                        !EXCLUDED_COLUMNS.includes(name)
-                    ) {
-
-                        detectedWarehouses.push(
-                            String(headers[idx]).trim()
-                        );
-
-                        whIndices[
-                            String(headers[idx]).trim()
-                        ] = idx;
+            if (detectedWarehouses.length === 0) {
+                for (let idx = 0; idx < headers.length; idx++) {
+                    if (idx === descColIdx || idx === katColIdx) continue;
+                    const name = normalizeHeader(headers[idx]);
+                    if (name && !EXCLUDED_COLUMNS.includes(name)) {
+                        detectedWarehouses.push(String(headers[idx]).trim());
+                        whIndices[String(headers[idx]).trim()] = idx;
                     }
                 }
             }
 
-            if (
-                detectedWarehouses.length === 0
-            ) {
-
-                throw new Error(
-                    "Kolom gudang tidak berhasil ditemukan."
-                );
+            if (detectedWarehouses.length === 0) {
+                throw new Error("Kolom gudang tidak berhasil ditemukan.");
             }
 
-            /*
-             * Bangun data stok.
-             */
             const parsedData = [];
+            let currentCategory = "UMUM";
 
-            let currentCategory =
-                "UMUM";
+            for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
+                const row = jsonRows[i] || [];
+                const descValue = row[descColIdx];
+                const desc = String(descValue ?? "").trim();
+                if (!desc) continue;
 
-            for (
-                let i = headerRowIdx + 1;
-                i < jsonRows.length;
-                i++
-            ) {
-
-                const row =
-                    jsonRows[i] || [];
-
-                const descValue =
-                    row[descColIdx];
-
-                const desc =
-                    String(
-                        descValue ?? ""
-                    ).trim();
-
-                if (!desc) {
+                const descNorm = normalizeText(desc);
+                if (descNorm === "TOTAL" || descNorm.includes("GRAND TOTAL") || descNorm.includes("CETAK DI")) {
                     continue;
                 }
 
-                const descNorm =
-                    normalizeText(desc);
-
-                /*
-                 * Abaikan baris total / cetak.
-                 */
-                if (
-                    descNorm === "TOTAL" ||
-                    descNorm.includes("GRAND TOTAL") ||
-                    descNorm.includes("CETAK DI")
-                ) {
-                    continue;
-                }
-
-                /*
-                 * Kategori bisa berada pada baris sendiri
-                 * dan berlaku ke baris berikutnya.
-                 */
-                if (
-                    katColIdx !== -1
-                ) {
-
-                    const katValue =
-                        String(
-                            row[katColIdx] ?? ""
-                        ).trim();
-
-                    const katNorm =
-                        normalizeText(katValue);
-
-                    if (
-                        katValue &&
-                        katNorm !== "0" &&
-                        katNorm !== "KATAGORI" &&
-                        katNorm !== "KATEGORI"
-                    ) {
-
-                        currentCategory =
-                            katValue;
+                if (katColIdx !== -1) {
+                    const katValue = String(row[katColIdx] ?? "").trim();
+                    const katNorm = normalizeText(katValue);
+                    if (katValue && katNorm !== "0" && katNorm !== "KATAGORI" && katNorm !== "KATEGORI") {
+                        currentCategory = katValue;
                     }
                 }
 
                 const qtys = {};
-
-                detectedWarehouses.forEach(
-                    warehouse => {
-
-                        const colIdx =
-                            whIndices[warehouse];
-
-                        const rawValue =
-                            colIdx !== undefined
-                                ? row[colIdx]
-                                : 0;
-
-                        qtys[warehouse] =
-                            parseExcelNumber(
-                                rawValue
-                            );
-                    }
-                );
+                detectedWarehouses.forEach(warehouse => {
+                    const colIdx = whIndices[warehouse];
+                    const rawValue = colIdx !== undefined ? row[colIdx] : 0;
+                    qtys[warehouse] = parseExcelNumber(rawValue);
+                });
 
                 parsedData.push({
-                    category:
-                        currentCategory,
-                    desc:
-                        desc,
-                    qtys:
-                        qtys
+                    category: currentCategory,
+                    desc: desc,
+                    qtys: qtys
                 });
             }
 
-            if (
-                parsedData.length === 0
-            ) {
-
-                throw new Error(
-                    "Header berhasil ditemukan, tetapi tidak ada data barang setelah header."
-                );
+            if (parsedData.length === 0) {
+                throw new Error("Tidak ada data barang setelah header.");
             }
 
-            /*
-             * Masukkan data ke aplikasi.
-             */
-            masterStockData =
-                parsedData;
-
-            warehouses =
-                detectedWarehouses;
-
-            categories =
-                [
-                    ...new Set(
-                        masterStockData.map(
-                            item => item.category
-                        )
-                    )
-                ];
-
+            masterStockData = parsedData;
+            warehouses = detectedWarehouses;
+            categories = [...new Set(masterStockData.map(item => item.category))];
             stateDeductions = {};
             transactionLogs = [];
 
@@ -1821,34 +1072,11 @@ function importExcelFile(file) {
             renderRekap();
             initPenarikanCheckboxes();
 
-            document.getElementById(
-                "excelFileInfo"
-            ).innerText =
-                `${file.name} | Sheet: ${firstSheetName} | Header baris ${headerRowIdx + 1} | ${masterStockData.length} item | ${warehouses.length} gudang`;
-
-            showUploadStatus(
-                `✅ <b>${escapeHtml(file.name)}</b> berhasil dibaca.<br>
-                Sheet: <b>${escapeHtml(firstSheetName)}</b> |
-                Header: baris <b>${headerRowIdx + 1}</b> |
-                Data barang: <b>${masterStockData.length}</b> |
-                Gudang: <b>${warehouses.length}</b><br>
-                Gudang terdeteksi: ${detectedWarehouses.map(escapeHtml).join(", ")}`,
-                "success"
-            );
+            showUploadStatus(`✅ <b>${escapeHtml(file.name)}</b> berhasil dimuat (${masterStockData.length} item).`, "success");
 
         } catch (err) {
-
-            console.error(
-                "ERROR IMPORT EXCEL:",
-                err
-            );
-
-            showUploadStatus(
-                `❌ <b>Gagal membaca Excel.</b><br>
-                ${escapeHtml(err.message || String(err))}<br><br>
-                Pastikan file adalah Excel asli (.xls/.xlsx) dan memiliki header deskripsi barang serta kolom gudang.`,
-                "error"
-            );
+            console.error("ERROR IMPORT EXCEL:", err);
+            showUploadStatus(`❌ Gagal membaca Excel: ${escapeHtml(err.message)}`, "error");
         }
     };
 
@@ -1861,157 +1089,56 @@ function importExcelFile(file) {
 ============================================================ */
 
 function findExcelHeader(rows) {
-
-    /*
-     * Kita tidak lagi menganggap baris pertama sebagai header.
-     * Cari sampai 50 baris pertama.
-     */
-
-    const maxRows =
-        Math.min(
-            rows.length,
-            50
-        );
-
+    const maxRows = Math.min(rows.length, 50);
     let best = null;
 
-    for (
-        let r = 0;
-        r < maxRows;
-        r++
-    ) {
-
-        const row =
-            rows[r] || [];
-
+    for (let r = 0; r < maxRows; r++) {
+        const row = rows[r] || [];
         if (!row.length) continue;
 
         let descColIdx = -1;
         let katColIdx = -1;
 
-        row.forEach(
-            (cell, idx) => {
-
-                const h =
-                    normalizeHeader(cell);
-
-                if (
-                    h === "KATEGORI" ||
-                    h === "KATAGORI" ||
-                    h.includes("KATEGORI")
-                ) {
-                    if (katColIdx === -1) {
-                        katColIdx = idx;
-                    }
-                }
-
-                if (
-                    h === "DESKRIPSI" ||
-                    h === "DESKRIPSI BARANG" ||
-                    h === "NAMA BARANG" ||
-                    h === "BARANG" ||
-                    h === "ITEM" ||
-                    h === "PRODUCT" ||
-                    h === "PRODUK" ||
-                    h === "DESCRIPTION"
-                ) {
-                    if (descColIdx === -1) {
-                        descColIdx = idx;
-                    }
-                }
+        row.forEach((cell, idx) => {
+            const h = normalizeHeader(cell);
+            if (h === "KATEGORI" || h === "KATAGORI" || h.includes("KATEGORI")) {
+                if (katColIdx === -1) katColIdx = idx;
             }
-        );
+            if (["DESKRIPSI", "DESKRIPSI BARANG", "NAMA BARANG", "BARANG", "ITEM", "PRODUCT", "PRODUK", "DESCRIPTION"].includes(h)) {
+                if (descColIdx === -1) descColIdx = idx;
+            }
+        });
 
-        /*
-         * Jika kolom deskripsi tidak bernama persis,
-         * coba cari kata "DESKRIPSI".
-         */
         if (descColIdx === -1) {
-
-            row.forEach(
-                (cell, idx) => {
-
-                    const h =
-                        normalizeHeader(cell);
-
-                    if (
-                        h.includes("DESKRIPSI") ||
-                        h.includes("DESCRIPTION") ||
-                        h.includes("NAMA BARANG")
-                    ) {
-
-                        if (descColIdx === -1) {
-                            descColIdx = idx;
-                        }
-                    }
+            row.forEach((cell, idx) => {
+                const h = normalizeHeader(cell);
+                if (h.includes("DESKRIPSI") || h.includes("DESCRIPTION") || h.includes("NAMA BARANG")) {
+                    if (descColIdx === -1) descColIdx = idx;
                 }
-            );
+            });
         }
 
-        /*
-         * Jika tidak ada label deskripsi,
-         * tetapi ada kategori + banyak header,
-         * kemungkinan kolom pertama adalah deskripsi.
-         */
-        if (
-            descColIdx === -1 &&
-            katColIdx !== -1 &&
-            row.length >= 3
-        ) {
+        if (descColIdx === -1 && katColIdx !== -1 && row.length >= 3) {
             descColIdx = 0;
         }
 
-        let nonEmptyCount =
-            row.filter(
-                x =>
-                    String(x ?? "").trim() !== ""
-            ).length;
+        let nonEmptyCount = row.filter(x => String(x ?? "").trim() !== "").length;
 
-        /*
-         * Header dianggap valid jika:
-         * - punya deskripsi
-         * - atau kategori
-         * - dan minimal 3 kolom terisi.
-         */
-        if (
-            (descColIdx !== -1 ||
-             katColIdx !== -1) &&
-            nonEmptyCount >= 2
-        ) {
-
+        if ((descColIdx !== -1 || katColIdx !== -1) && nonEmptyCount >= 2) {
             best = {
                 rowIndex: r,
                 headers: row,
-                descColIdx:
-                    descColIdx !== -1
-                        ? descColIdx
-                        : 0,
-                katColIdx:
-                    katColIdx
+                descColIdx: descColIdx !== -1 ? descColIdx : 0,
+                katColIdx: katColIdx
             };
-
             break;
         }
     }
 
-    /*
-     * Fallback:
-     * Jika Excel sangat sederhana dan tidak punya
-     * label Deskripsi/Kategori, gunakan baris pertama.
-     */
     if (!best && rows.length > 0) {
-
-        const first =
-            rows[0] || [];
-
+        const first = rows[0] || [];
         if (first.length >= 2) {
-
-            best = {
-                rowIndex: 0,
-                headers: first,
-                descColIdx: 0,
-                katColIdx: -1
-            };
+            best = { rowIndex: 0, headers: first, descColIdx: 0, katColIdx: -1 };
         }
     }
 
@@ -2023,121 +1150,40 @@ function findExcelHeader(rows) {
    DETEKSI KOLOM GUDANG
 ============================================================ */
 
-function detectWarehouseColumns(
-    headers,
-    descColIdx,
-    katColIdx
-) {
-
+function detectWarehouseColumns(headers, descColIdx, katColIdx) {
     const warehousesFound = [];
     const indices = {};
 
-    headers.forEach(
-        (header, idx) => {
+    headers.forEach((header, idx) => {
+        if (idx === descColIdx || idx === katColIdx) return;
+        const original = String(header ?? "").trim();
+        if (!original) return;
 
-            if (
-                idx === descColIdx ||
-                idx === katColIdx
-            ) {
-                return;
-            }
+        const normalized = normalizeHeader(original);
+        if (!normalized || normalized === "UNDEFINED" || EXCLUDED_COLUMNS.includes(normalized)) return;
 
-            const original =
-                String(
-                    header ?? ""
-                ).trim();
+        const ignoredPatterns = ["HARGA", "PRICE", "SATUAN", "UNIT", "KODE", "SKU", "BARCODE", "NOTE", "CATATAN", "TOTAL", "JUMLAH"];
+        if (ignoredPatterns.some(p => normalized === p || normalized.includes(p))) return;
 
-            if (!original) return;
+        warehousesFound.push(original);
+        indices[original] = idx;
+    });
 
-            const normalized =
-                normalizeHeader(
-                    original
-                );
-
-            if (
-                !normalized ||
-                normalized === "UNDEFINED" ||
-                EXCLUDED_COLUMNS.includes(normalized)
-            ) {
-                return;
-            }
-
-            /*
-             * Abaikan kolom yang jelas bukan gudang.
-             */
-            const ignoredPatterns = [
-                "HARGA",
-                "PRICE",
-                "SATUAN",
-                "UNIT",
-                "KODE",
-                "SKU",
-                "BARCODE",
-                "NOTE",
-                "CATATAN",
-                "TOTAL",
-                "JUMLAH"
-            ];
-
-            if (
-                ignoredPatterns.some(
-                    pattern =>
-                        normalized === pattern ||
-                        normalized.includes(pattern)
-                )
-            ) {
-                return;
-            }
-
-            /*
-             * Kolom yang tersisa dianggap gudang.
-             */
-            warehousesFound.push(
-                original
-            );
-
-            indices[original] =
-                idx;
-        }
-    );
-
-    return {
-        warehouses:
-            warehousesFound,
-        indices:
-            indices
-    };
+    return { warehouses: warehousesFound, indices: indices };
 }
 
 
 /* ============================================================
-   KEYBOARD FILTER OTOMATIS
+   EVENT FILTER STOK
 ============================================================ */
 
-[
-    "filterSku",
-    "filterKategori",
-    "filterGudang",
-    "filterStatus"
-].forEach(id => {
-
-    const el =
-        document.getElementById(id);
-
+["filterSku", "filterKategori", "filterGudang", "filterStatus"].forEach(id => {
+    const el = document.getElementById(id);
     if (!el) return;
-
-    el.addEventListener(
-        "change",
-        renderStokTable
-    );
+    el.addEventListener("change", renderStokTable);
 });
 
-document
-    .getElementById("filterSku")
-    .addEventListener(
-        "input",
-        renderStokTable
-    );
+document.getElementById("filterSku").addEventListener("input", renderStokTable);
 
 
 /* ============================================================
@@ -2145,25 +1191,14 @@ document
 ============================================================ */
 
 window.onload = function() {
-
-    const tanggal =
-        new Date().toLocaleDateString(
-            "id-ID",
-            {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-            }
-        );
-
-    document.getElementById(
-        "tanggalUpdate"
-    ).innerText =
-        `| Update ${tanggal}`;
-
+    const tanggal = new Date().toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+    document.getElementById("tanggalUpdate").innerText = `| Update ${tanggal}`;
     loadSampleData();
 };
-
 </script>
 
 </body>
